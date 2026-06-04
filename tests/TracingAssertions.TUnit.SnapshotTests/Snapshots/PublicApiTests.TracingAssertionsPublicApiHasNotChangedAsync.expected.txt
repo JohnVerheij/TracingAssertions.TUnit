@@ -1,0 +1,13 @@
+[assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
+[assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
+[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/TracingAssertions.TUnit")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
+namespace TracingAssertions
+{
+    public sealed class SpanCapture : System.IDisposable
+    {
+        public System.Collections.Generic.IReadOnlyList<System.Diagnostics.Activity> Captured { get; }
+        public void Dispose() { }
+        public static TracingAssertions.SpanCapture ForSource(string sourceName) { }
+    }
+}

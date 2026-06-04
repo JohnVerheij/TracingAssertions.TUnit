@@ -1,21 +1,21 @@
 # TracingAssertions.TUnit
 
 [![CI](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml)
-[![NuGet TracingAssertions](https://img.shields.io/nuget/v/TracingAssertions?label=TracingAssertions)](https://www.nuget.org/packages/TracingAssertions)
-[![NuGet TracingAssertions.TUnit](https://img.shields.io/nuget/v/TracingAssertions.TUnit?label=TracingAssertions.TUnit)](https://www.nuget.org/packages/TracingAssertions.TUnit)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CodeQL](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/codeql.yml/badge.svg)](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/JohnVerheij/TracingAssertions.TUnit/badge)](https://scorecard.dev/viewer/?uri=github.com/JohnVerheij/TracingAssertions.TUnit)
+[![codecov](https://codecov.io/gh/JohnVerheij/TracingAssertions.TUnit/branch/main/graph/badge.svg)](https://codecov.io/gh/JohnVerheij/TracingAssertions.TUnit)
+[![NuGet](https://img.shields.io/nuget/v/TracingAssertions.TUnit.svg)](https://www.nuget.org/packages/TracingAssertions.TUnit/)
+[![Downloads](https://img.shields.io/nuget/dt/TracingAssertions.TUnit.svg)](https://www.nuget.org/packages/TracingAssertions.TUnit/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-Fluent assertions for OpenTelemetry distributed tracing (`System.Diagnostics.Activity` spans) in .NET
-test projects. Capture the spans your code emits with a raw `ActivityListener`, then assert on them
-through TUnit's `Assert.That(...)` pipeline.
+TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent entry points over TUnit's `Assert.That(...)` pipeline for asserting on `System.Diagnostics.Activity` spans, with a framework-agnostic core (`TracingAssertions`) that a future xUnit, NUnit, or MSTest adapter can reuse. AOT-compatible, trimmable, no runtime reflection in the assertion path. No OpenTelemetry SDK and no NuGet runtime dependency: capture is a raw `ActivityListener` over an `ActivitySource`.
 
-No OpenTelemetry SDK, no exporter pipeline, **no NuGet runtime dependency**
-(`System.Diagnostics.DiagnosticSource` is in the shared framework). AOT-compatible, trimmable, and no
-runtime reflection in the assertion path.
+> **Foundation release (v0.0.1).** Ships single-source `SpanCapture` and the `HasOperationName` assertion. The fuller span-query surface and the tag / status / parent-child / same-trace assertions land in 0.1.0 (see [Roadmap](#roadmap)).
 
-> **Foundation release (v0.0.1).** This release establishes the packages and ships a minimal surface:
-> single-source `SpanCapture` and the `HasOperationName` assertion. The fuller span-query surface and
-> the tag / status / parent-child / same-trace assertions land in 0.1.0 (see [Roadmap](#roadmap)).
+> **Scope:** Test projects only. Not intended for production code.
+
+---
 
 ## Table of contents
 
@@ -26,6 +26,7 @@ runtime reflection in the assertion path.
 - [Quick start](#quick-start)
 - [Entry points](#entry-points)
 - [Failure diagnostics](#failure-diagnostics)
+- [Design notes](#design-notes)
 - [Stability intent (pre-1.0)](#stability-intent-pre-10)
 - [Roadmap](#roadmap)
 - [Family compatibility](#family-compatibility)
@@ -134,6 +135,16 @@ capture-level `HasSpan` (see [Roadmap](#roadmap)).
 Expected the span to have operation name "order.created"
   but it was "order.updated"
 ```
+
+## Design notes
+
+### Why a raw `ActivityListener`, not the OpenTelemetry SDK
+
+Capture is a BCL `ActivityListener` over an `ActivitySource`, not an OpenTelemetry `TracerProvider` with an in-memory exporter. That keeps the package at **zero NuGet runtime dependencies** (`System.Diagnostics.DiagnosticSource` is in the shared framework) and AOT-safe, and it matches how production code emits spans (a plain `ActivitySource`) without standing up an SDK pipeline in the test.
+
+### Why per-test capture, disposed via `using`
+
+`SpanCapture` is a `using`-scoped handle that attaches its listener on creation and detaches on `Dispose`, with a fresh collection per instance. This keeps span capture isolated per test (no process-wide singleton leaking spans across parallel or sequential tests) and bounds the listener's lifetime to the test that needs it.
 
 ## Stability intent (pre-1.0)
 

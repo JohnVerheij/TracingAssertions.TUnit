@@ -1,0 +1,27 @@
+[assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
+[assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
+[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/TracingAssertions.TUnit")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
+namespace TUnit.Assertions.Extensions
+{
+    public sealed class Activity_HasOperationName_String_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
+    {
+        public Activity_HasOperationName_String_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, string operationName) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public static class SpanAssertions
+    {
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.Activity_HasOperationName_String_Assertion HasOperationName<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, string operationName, [System.Runtime.CompilerServices.CallerArgumentExpression("operationName")] string? operationNameExpression = null)
+            where TActual : System.Diagnostics.Activity { }
+    }
+}
+namespace TracingAssertions.TUnit
+{
+    public static class SpanAssertions
+    {
+        [TUnit.Assertions.Attributes.GenerateAssertion]
+        public static TUnit.Assertions.Core.AssertionResult HasOperationName(this System.Diagnostics.Activity span, string operationName) { }
+    }
+}
