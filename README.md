@@ -1,4 +1,4 @@
-# TracingAssertions
+# TracingAssertions.TUnit
 
 [![CI](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml)
 [![NuGet TracingAssertions](https://img.shields.io/nuget/v/TracingAssertions?label=TracingAssertions)](https://www.nuget.org/packages/TracingAssertions)
@@ -17,20 +17,82 @@ runtime reflection in the assertion path.
 > single-source `SpanCapture` and the `HasOperationName` assertion. The fuller span-query surface and
 > the tag / status / parent-child / same-trace assertions land in 0.1.0 (see [Roadmap](#roadmap)).
 
-## Packages
+## Table of contents
 
-| Package | What it is |
-|---|---|
-| [`TracingAssertions`](https://www.nuget.org/packages/TracingAssertions) | Framework-agnostic core: the `SpanCapture` listener-backed capture type. No test-framework dependency. |
-| [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit) | TUnit adapter: fluent `Assert.That(span)` assertions, source-generated via `[GenerateAssertion]`. References the core. |
+- [Why this package](#why-this-package)
+- [Install](#install)
+- [Package layout](#package-layout)
+- [Namespaces](#namespaces)
+- [Quick start](#quick-start)
+- [Entry points](#entry-points)
+- [Failure diagnostics](#failure-diagnostics)
+- [Stability intent (pre-1.0)](#stability-intent-pre-10)
+- [Roadmap](#roadmap)
+- [Family compatibility](#family-compatibility)
+- [Pair with](#pair-with)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why this package
+
+OpenTelemetry tracing turns up in test code whenever production emits spans: a test wants to assert
+"the pipeline started a span named `pick.pipeline`", "it carried `process.id = 0`", "the child span
+shares the parent's trace". The BCL gives you the raw machinery (`ActivitySource`, `Activity`,
+`ActivityListener`), but asserting on it is manual: wire up a listener, collect stopped activities
+into a bag, then hand-roll the find-and-compare against `Assert`. Every project that does this
+re-invents the same capture-and-query helper.
+
+`TracingAssertions.TUnit` absorbs that boilerplate into a reusable capture type and a fluent assertion
+surface:
+
+- A disposable, per-test `SpanCapture` that starts a raw `ActivityListener`
+  (`AllDataAndRecorded`) over an `ActivitySource` and collects the stopped spans.
+- TUnit `Assert.That(span).HasOperationName(...)` assertions, source-generated via
+  `[GenerateAssertion]`.
+
+Capture is a BCL `ActivityListener` over an `ActivitySource` matched by name, so there is **no
+OpenTelemetry SDK dependency, no exporter pipeline, and no NuGet runtime dependency**. AOT-clean from
+day one. The framework-agnostic `TracingAssertions` core ships separately so non-TUnit consumers can
+reuse the capture.
 
 ## Install
 
 ```bash
+# TUnit consumers install the adapter; the core is pulled transitively:
 dotnet add package TracingAssertions.TUnit
+
+# Framework-agnostic consumers (rare in test projects) can pull the core directly:
+dotnet add package TracingAssertions
 ```
 
-The adapter brings the `TracingAssertions` core in transitively.
+**Requirements:** TUnit 1.48.6 or later, .NET 10. AOT-compatible, trimmable.
+
+## Package layout
+
+| Package | Purpose | Depends on |
+|---|---|---|
+| [`TracingAssertions`](https://www.nuget.org/packages/TracingAssertions/) | Framework-agnostic core: the `SpanCapture` listener-backed capture type | BCL only |
+| [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit/) | TUnit adapter: fluent `Assert.That(span)` assertions (`HasOperationName`) | `TracingAssertions` + `TUnit.Assertions` + `TUnit.Core` |
+
+Install `TracingAssertions.TUnit` for TUnit test projects; `TracingAssertions` comes transitively.
+Adapters for other test frameworks (NUnit, xUnit, MSTest) are not shipped; they would reuse the
+`TracingAssertions` core. Open a feature request if you need one.
+
+## Namespaces
+
+| Type / member | Namespace | Auto-imported? |
+|---|---|---|
+| Fluent entry points (`HasOperationName`) | `TUnit.Assertions.Extensions` | Yes (TUnit auto-imports) |
+| Core type (`SpanCapture`) | `TracingAssertions` | No - needs `using TracingAssertions;` |
+
+A `GlobalUsings.cs` in your test project:
+
+```csharp
+global using TracingAssertions;
+```
+
+makes the core namespace available everywhere. The fluent entry points are auto-imported via
+`TUnit.Assertions.Extensions`, so they need no `using` of their own.
 
 ## Quick start
 
@@ -44,9 +106,10 @@ using var capture = SpanCapture.ForSource("MyCompany.MyService");
 using (var span = MyActivitySource.StartActivity("pick.pipeline"))
 {
     // ... run the code under test; the span stops at the end of this scope ...
+    await Assert.That(span).HasOperationName("pick.pipeline");
 }
 
-// Assert on a captured span (TUnit adapter).
+// ... or assert on a captured span after the fact:
 await Assert.That(capture.Captured[0]).HasOperationName("pick.pipeline");
 ```
 
@@ -54,25 +117,83 @@ await Assert.That(capture.Captured[0]).HasOperationName("pick.pipeline");
 every stopped `Activity` from the named source. Create one per test with `using` for isolation;
 disposing it detaches the listener.
 
+## Entry points
+
+| Assertion | Receiver | Description |
+|---|---|---|
+| `HasOperationName(name)` | `Activity` | Asserts the span's `OperationName` equals `name` (ordinal). |
+
+The 0.1.0 release adds tag-exists / tag-value / status / is-child-of / same-trace assertions and a
+capture-level `HasSpan` (see [Roadmap](#roadmap)).
+
+## Failure diagnostics
+
+`HasOperationName` names both the expected and observed operation name on failure:
+
+```
+Expected the span to have operation name "order.created"
+  but it was "order.updated"
+```
+
+## Stability intent (pre-1.0)
+
+This is a 0.x release and the public API may evolve.
+
+- **Additive changes** (new entry points, new chain methods) ship in any patch without breaking
+  ApiCompat.
+- **Breaking changes** to existing signatures bump the minor version (0.X.0) and are called out in the
+  [CHANGELOG](CHANGELOG.md).
+- From 0.1.0, `PackageValidationBaselineVersion` pins to the previous shipped version so ApiCompat
+  catches binary breaks at pack time; `CompatibilitySuppressions.xml` records accepted differences.
+
+The 1.0 milestone signals API stability.
+
 ## Roadmap
 
 Planned for **0.1.0**:
 
 - Multi-source capture (`SpanCapture.ForSources(...)`).
-- Span queries on the capture: find-by-operation-name, find-by-name-and-tag, and parent/child navigation.
+- Span queries on the capture: find-by-operation-name, find-by-name-and-tag, and parent/child
+  navigation.
 - Assertions: tag-exists, tag-value, status, is-child-of, same-trace, and a capture-level `HasSpan`.
 
 Deferred (no current demand): span events / links / baggage, duration and kind assertions, multi-level
-child-chain matchers.
+child-chain matchers, and tag type-aware matching (today's comparisons are value-based).
 
-## Design principles
+Demand-driven; no fixed timeline.
 
-- **Zero runtime dependencies.** Capture is a BCL `ActivityListener` over an `ActivitySource`; nothing
-  from the OpenTelemetry SDK is required at runtime.
-- **AOT-safe and trimmable.** No reflection in the assertion path.
-- **Core + adapter.** The capture lives in the framework-agnostic core; the fluent assertions live in
-  the TUnit adapter, so other test-framework adapters are possible if there is demand.
+## Family compatibility
+
+The assertion-family packages: `LogAssertions.TUnit`, `TimeAssertions.TUnit`,
+`SnapshotAssertions.TUnit`, `MathAssertions.TUnit`, `JsonAssertions.TUnit`, `SseAssertions.TUnit`,
+`GrpcAssertions.TUnit`, and `TracingAssertions.TUnit`: release independently and target the same .NET
+TFM at any moment (LTS-anchored, multi-target during STS support windows; see the
+[TFM policy in CONVENTIONS.md](CONVENTIONS.md#tfm-policy) for the rotation schedule). **Mix versions
+freely.** Each package ships under SemVer with `EnablePackageValidation` strict-mode ApiCompat against
+its previous baseline, so binary breaks within a version line are caught at pack time.
+
+## Pair with
+
+- **[`LogAssertions.TUnit`](https://www.nuget.org/packages/LogAssertions.TUnit/)**: fluent log assertions over `Microsoft.Extensions.Logging.Testing.FakeLogCollector`.
+- **[`TimeAssertions.TUnit`](https://www.nuget.org/packages/TimeAssertions.TUnit/)**: `TimeProvider`-aware time assertions and cross-cutting `.WithinTimeBudget(...)` chain methods. A natural pairing once span-duration assertions arrive.
+- **[`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/)**: text-snapshot assertions for API-surface tests and similar deterministic-string scenarios.
+- **[`MathAssertions.TUnit`](https://www.nuget.org/packages/MathAssertions.TUnit/)**: tolerance-aware fluent assertions over numeric and geometric types.
+- **[`JsonAssertions.TUnit`](https://www.nuget.org/packages/JsonAssertions.TUnit/)**: fluent JSON assertions over `System.Text.Json` and HTTP response bodies.
+- **[`SseAssertions.TUnit`](https://www.nuget.org/packages/SseAssertions.TUnit/)**: fluent Server-Sent Events wire-format assertions.
+- **[`GrpcAssertions.TUnit`](https://www.nuget.org/packages/GrpcAssertions.TUnit/)**: fluent gRPC outcome assertions plus the `GrpcCallBuilder` test-double helper.
+
+## Contributing
+
+Issues and pull requests welcome. Before opening a PR:
+
+- Run `dotnet build` and `dotnet test` locally; the CI pipeline enforces the same quality bar (zero warnings as errors, 90% line / 90% branch coverage minimum).
+- Match the existing code style (`.editorconfig` is authoritative; `dotnet format` covers formatting).
+- For new assertions, include a test for both the happy path and a representative failure case.
+
+For larger ideas, open a [Discussion](https://github.com/JohnVerheij/TracingAssertions.TUnit/discussions) first to align on direction before investing implementation time.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR review checklist, and [CONVENTIONS.md](CONVENTIONS.md) for the family-wide code conventions shared across the assertion family.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). Copyright (c) 2026 John Verheij.
