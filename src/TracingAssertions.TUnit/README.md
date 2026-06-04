@@ -8,17 +8,21 @@
 
 TUnit-native OpenTelemetry distributed-tracing (`Activity` / span) assertions for .NET tests. Fluent entry points over TUnit's `Assert.That(...)` pipeline for asserting on captured spans. AOT-compatible, trimmable, no runtime reflection in the assertion path.
 
-> **Foundation release (v0.0.1):** ships the `HasOperationName` span assertion. The full surface (tags, status, parent/child, same-trace, and a capture-level `HasSpan`) lands in 0.1.0.
-
 ## What ships
 
-Assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Activity`:
+Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Activity`:
 
 | Entry point | Behaviour |
 |---|---|
 | `HasOperationName(name)` | Asserts the span's `OperationName` equals `name` (ordinal). |
+| `HasTag(key)` | Asserts a tag `key` is present (non-null value). |
+| `HasTagValue(key, value)` | Asserts the tag `key` matches `value` (compared by invariant `ToString`). |
+| `HasStatus(status)` | Asserts the span's `Status` equals the given `ActivityStatusCode`. |
+| `IsChildOf(parent)` | Asserts a single-hop parent/child relationship in the same trace. |
+| `SharesTraceWith(other)` | Asserts two spans share a `TraceId`. |
+| `HasSpan(operationName)` (on `SpanCapture`) | Asserts the capture contains a span with that operation name. |
 
-The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from an `ActivitySource` via a raw `ActivityListener`, with no OpenTelemetry SDK or NuGet runtime dependency.
+The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from one or more `ActivitySource`s via a raw `ActivityListener` (no OpenTelemetry SDK or NuGet runtime dependency), plus the query helpers `FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`.
 
 ## Install
 

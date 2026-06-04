@@ -1,0 +1,64 @@
+using System;
+using System.Diagnostics;
+using System.Text;
+using TracingAssertions;
+using TUnit.Assertions.Attributes;
+using TUnit.Assertions.Core;
+
+namespace TracingAssertions.TUnit;
+
+/// <summary>
+/// TUnit-native fluent assertions over a <see cref="SpanCapture"/>: capture-level checks that do not
+/// require the caller to first locate a span.
+/// </summary>
+/// <remarks>
+/// Source methods carry the <c>[GenerateAssertion]</c> attribute; TUnit's source generator emits the
+/// fluent <c>Assert.That(capture).&lt;Method&gt;()</c> entry point at consumer build time.
+/// </remarks>
+public static class SpanCaptureAssertions
+{
+    /// <summary>Asserts that <paramref name="capture"/> contains at least one span whose
+    /// <see cref="Activity.OperationName"/> equals <paramref name="operationName"/> (ordinal).</summary>
+    /// <param name="capture">The span capture, as the receiver of the fluent assertion.</param>
+    /// <param name="operationName">The operation name expected to appear among the captured spans.</param>
+    /// <returns>A passing assertion when a matching span was captured; otherwise a failing assertion
+    /// listing the captured operation names.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="capture"/> or
+    /// <paramref name="operationName"/> is <see langword="null"/>.</exception>
+    [GenerateAssertion]
+    public static AssertionResult HasSpan(this SpanCapture capture, string operationName)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+        ArgumentNullException.ThrowIfNull(operationName);
+
+        if (capture.FindByOperationName(operationName) is not null)
+        {
+            return AssertionResult.Passed;
+        }
+
+        var captured = capture.Captured;
+        var sb = new StringBuilder();
+        sb.Append("the captured spans to include one with operation name \"")
+          .Append(operationName)
+          .Append("\"\n  but none did (captured: ");
+        if (captured.Count is 0)
+        {
+            sb.Append("<none>");
+        }
+        else
+        {
+            for (var i = 0; i < captured.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append('"').Append(captured[i].OperationName).Append('"');
+            }
+        }
+
+        sb.Append(')');
+        return AssertionResult.Failed(sb.ToString());
+    }
+}
