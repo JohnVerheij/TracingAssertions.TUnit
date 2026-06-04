@@ -2,7 +2,7 @@
 
 Rules for how code is written across the assertion family (`LogAssertions.TUnit`,
 `SnapshotAssertions.TUnit`, `TimeAssertions.TUnit`, `MathAssertions.TUnit`,
-`JsonAssertions.TUnit`, `TracingAssertions.TUnit`, and `GrpcAssertions.TUnit`). The same file is copied identically
+`JsonAssertions.TUnit`, `SseAssertions.TUnit`, and `GrpcAssertions.TUnit`). The same file is copied identically
 into each repo.
 
 **Document version:** v0.8 (2026-06-02). Changes from v0.7:
@@ -10,7 +10,7 @@ into each repo.
 - **Family roster expanded to seven packages.** `GrpcAssertions.TUnit` joins as the
   seventh member, asserting on gRPC call outcomes (`RpcException` presence, `StatusCode`,
   and `Status.Detail`) as a strict-scope-distinct transport domain from `JsonAssertions.TUnit`
-  and `TracingAssertions.TUnit`. The cap revision 6 → 7 was justified by strict-scope analysis on
+  and `SseAssertions.TUnit`. The cap revision 6 → 7 was justified by strict-scope analysis on
   a known-distinct domain (per the per-package scope policy below), not by adoption-growth
   reasoning.
 - **Dependency policy added.** `GrpcAssertions.TUnit` is the first family package to carry a
@@ -20,7 +20,7 @@ into each repo.
 
 **Document version:** v0.7 (2026-05-17). Changes from v0.6:
 
-- **Family roster expanded to six packages.** `TracingAssertions.TUnit` joins as the sixth
+- **Family roster expanded to six packages.** `SseAssertions.TUnit` joins as the sixth
   member, handling Server-Sent Events (SSE) as a strict-scope-distinct domain from
   `JsonAssertions.TUnit`. The cap revision 5 → 6 was justified by strict-scope analysis on
   a known-distinct domain (per the per-package scope policy below), not by adoption-growth
@@ -245,7 +245,7 @@ test-projects-only blockquote.
 | `TimeAssertions.TUnit` | `TimeProvider`-based timing assertions and the `WithinTimeBudget(TimeSpan)` cross-cutting modifier. Determinism via `FakeTimeProvider`. |
 | `MathAssertions.TUnit` | Approximate-numeric and geometric tolerance: `IsApproximatelyEqualTo(value, tolerance)`, pose / vector / matrix tolerance. |
 | `JsonAssertions.TUnit` | JSON content assertions over `System.Text.Json`: path / value / shape on `JsonDocument`, HTTP-response JSON, and `JsonSerializerContext`-registered types. |
-| `TracingAssertions.TUnit` | Server-Sent Events wire-format assertions: event-count, field shape (`event:`, `data:`, `id:`, `retry:`), and stream content validation. |
+| `SseAssertions.TUnit` | Server-Sent Events wire-format assertions: event-count, field shape (`event:`, `data:`, `id:`, `retry:`), and stream content validation. |
 | `GrpcAssertions.TUnit` | gRPC call outcomes: `RpcException` presence, `StatusCode`, and `Status.Detail`. Transport-level status, not Protobuf message structure. |
 
 The policy goal is "high-quality niche per package", not exhaustive
@@ -278,7 +278,7 @@ package's README:
 | `TimeAssertions.TUnit` | core (`TimeAssertions`) + adapter (`TimeAssertions.TUnit`) |
 | `MathAssertions.TUnit` | core (`MathAssertions`) + adapter (`MathAssertions.TUnit`) |
 | `JsonAssertions.TUnit` | single-package (only `JsonAssertions.TUnit`) |
-| `TracingAssertions.TUnit` | core (`TracingAssertions`) + adapter (`TracingAssertions.TUnit`) |
+| `SseAssertions.TUnit` | core (`SseAssertions`) + adapter (`SseAssertions.TUnit`) |
 | `GrpcAssertions.TUnit` | core (`GrpcAssertions`) + adapter (`GrpcAssertions.TUnit`) |
 
 **Core+adapter** ships the framework-agnostic primitives (parsers,
