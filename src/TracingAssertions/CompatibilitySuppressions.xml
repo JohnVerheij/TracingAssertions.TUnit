@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TracingAssertions.SpanCapture.ChildrenOf(System.Diagnostics.Activity)</Target>
+    <Left>lib/net10.0/TracingAssertions.dll</Left>
+    <Right>lib/net10.0/TracingAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TracingAssertions.SpanCapture.FindByOperationName(System.String)</Target>
+    <Left>lib/net10.0/TracingAssertions.dll</Left>
+    <Right>lib/net10.0/TracingAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TracingAssertions.SpanCapture.FindByOperationNameAndTag(System.String,System.String,System.Object)</Target>
+    <Left>lib/net10.0/TracingAssertions.dll</Left>
+    <Right>lib/net10.0/TracingAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:TracingAssertions.SpanCapture.ForSources(System.String[])</Target>
+    <Left>lib/net10.0/TracingAssertions.dll</Left>
+    <Right>lib/net10.0/TracingAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0003</DiagnosticId>
+    <Target>TracingAssertions, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Left>lib/net10.0/TracingAssertions.dll</Left>
+    <Right>lib/net10.0/TracingAssertions.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+</Suppressions>

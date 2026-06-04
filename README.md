@@ -11,8 +11,6 @@
 
 TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent entry points over TUnit's `Assert.That(...)` pipeline for asserting on `System.Diagnostics.Activity` spans, with a framework-agnostic core (`TracingAssertions`) that a future xUnit, NUnit, or MSTest adapter can reuse. AOT-compatible, trimmable, no runtime reflection in the assertion path. No OpenTelemetry SDK and no NuGet runtime dependency: capture is a raw `ActivityListener` over an `ActivitySource`.
 
-> **Foundation release (v0.0.1).** Ships single-source `SpanCapture` and the `HasOperationName` assertion. The fuller span-query surface and the tag / status / parent-child / same-trace assertions land in 0.1.0 (see [Roadmap](#roadmap)).
-
 > **Scope:** Test projects only. Not intended for production code.
 
 ---
@@ -37,7 +35,7 @@ TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent
 ## Why this package
 
 OpenTelemetry tracing turns up in test code whenever production emits spans: a test wants to assert
-"the pipeline started a span named `pick.pipeline`", "it carried `process.id = 0`", "the child span
+"the pipeline started a span named `order.pipeline`", "it carried `process.id = 0`", "the child span
 shares the parent's trace". The BCL gives you the raw machinery (`ActivitySource`, `Activity`,
 `ActivityListener`), but asserting on it is manual: wire up a listener, collect stopped activities
 into a bag, then hand-roll the find-and-compare against `Assert`. Every project that does this
@@ -104,14 +102,14 @@ using TracingAssertions;
 // Capture spans from one ActivitySource for the duration of a test.
 using var capture = SpanCapture.ForSource("MyCompany.MyService");
 
-using (var span = MyActivitySource.StartActivity("pick.pipeline"))
+using (var span = MyActivitySource.StartActivity("order.pipeline"))
 {
     // ... run the code under test; the span stops at the end of this scope ...
-    await Assert.That(span).HasOperationName("pick.pipeline");
+    await Assert.That(span).HasOperationName("order.pipeline");
 }
 
 // ... or assert on a captured span after the fact:
-await Assert.That(capture.Captured[0]).HasOperationName("pick.pipeline");
+await Assert.That(capture.Captured[0]).HasOperationName("order.pipeline");
 ```
 
 `SpanCapture.ForSource` starts a raw `ActivityListener` that samples `AllDataAndRecorded` and collects
@@ -120,12 +118,25 @@ disposing it detaches the listener.
 
 ## Entry points
 
-| Assertion | Receiver | Description |
-|---|---|---|
-| `HasOperationName(name)` | `Activity` | Asserts the span's `OperationName` equals `name` (ordinal). |
+Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Activity`:
 
-The 0.1.0 release adds tag-exists / tag-value / status / is-child-of / same-trace assertions and a
-capture-level `HasSpan` (see [Roadmap](#roadmap)).
+| Assertion | Description |
+|---|---|
+| `HasOperationName(name)` | The span's `OperationName` equals `name` (ordinal). |
+| `HasTag(key)` | The span carries a tag `key` with a non-null value. |
+| `HasTagValue(key, value)` | The span's tag `key` matches `value` (compared by invariant `ToString`). |
+| `HasStatus(status)` | The span's `Status` equals the given `ActivityStatusCode`. |
+| `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). |
+| `SharesTraceWith(other)` | The span shares `other`'s `TraceId`. |
+
+Capture-level assertion on `Assert.That(capture)` where `capture` is a `SpanCapture`:
+
+| Assertion | Description |
+|---|---|
+| `HasSpan(operationName)` | The capture contains a span with that operation name (lists the captured names on failure). |
+
+The `SpanCapture` core also exposes query helpers for locating spans without an assertion:
+`FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`.
 
 ## Failure diagnostics
 
@@ -161,15 +172,12 @@ The 1.0 milestone signals API stability.
 
 ## Roadmap
 
-Planned for **0.1.0**:
-
-- Multi-source capture (`SpanCapture.ForSources(...)`).
-- Span queries on the capture: find-by-operation-name, find-by-name-and-tag, and parent/child
-  navigation.
-- Assertions: tag-exists, tag-value, status, is-child-of, same-trace, and a capture-level `HasSpan`.
+Shipped in **0.1.0**: multi-source capture, the span-query helpers (`FindByOperationName`,
+`FindByOperationNameAndTag`, `ChildrenOf`), and the tag / status / parent-child / same-trace
+assertions plus capture-level `HasSpan`.
 
 Deferred (no current demand): span events / links / baggage, duration and kind assertions, multi-level
-child-chain matchers, and tag type-aware matching (today's comparisons are value-based).
+child-chain matchers, and tag type-aware (non-`ToString`) matching.
 
 Demand-driven; no fixed timeline.
 
