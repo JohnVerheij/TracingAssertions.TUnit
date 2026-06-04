@@ -49,10 +49,7 @@ surface:
 - TUnit `Assert.That(span).HasOperationName(...)` assertions, source-generated via
   `[GenerateAssertion]`.
 
-Capture is a BCL `ActivityListener` over an `ActivitySource` matched by name, so there is **no
-OpenTelemetry SDK dependency, no exporter pipeline, and no NuGet runtime dependency**. AOT-clean from
-day one. The framework-agnostic `TracingAssertions` core ships separately so non-TUnit consumers can
-reuse the capture.
+The framework-agnostic `TracingAssertions` core ships separately so non-TUnit consumers can reuse the capture.
 
 ## Install
 
