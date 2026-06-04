@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-06-05: span-query surface and the full assertion set
+## [0.1.0] - 2026-06-04: span-query surface and the full assertion set
 
 Minor release. Completes the foundation surface with multi-source capture, the span-query helpers, and
 the tag / status / parent-child / same-trace assertions plus a capture-level `HasSpan`. Purely
