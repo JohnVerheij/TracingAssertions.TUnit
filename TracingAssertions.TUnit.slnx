@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/TracingAssertions/TracingAssertions.csproj" />
+  <Project Path="src/TracingAssertions.TUnit/TracingAssertions.TUnit.csproj" />
+  <Project Path="tests/TracingAssertions.Tests/TracingAssertions.Tests.csproj" />
+  <Project Path="tests/TracingAssertions.TUnit.Tests/TracingAssertions.TUnit.Tests.csproj" />
+</Solution>
