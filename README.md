@@ -35,7 +35,7 @@ TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent
 ## Why this package
 
 OpenTelemetry tracing turns up in test code whenever production emits spans: a test wants to assert
-"the pipeline started a span named `pick.pipeline`", "it carried `process.id = 0`", "the child span
+"the pipeline started a span named `order.pipeline`", "it carried `process.id = 0`", "the child span
 shares the parent's trace". The BCL gives you the raw machinery (`ActivitySource`, `Activity`,
 `ActivityListener`), but asserting on it is manual: wire up a listener, collect stopped activities
 into a bag, then hand-roll the find-and-compare against `Assert`. Every project that does this
@@ -102,14 +102,14 @@ using TracingAssertions;
 // Capture spans from one ActivitySource for the duration of a test.
 using var capture = SpanCapture.ForSource("MyCompany.MyService");
 
-using (var span = MyActivitySource.StartActivity("pick.pipeline"))
+using (var span = MyActivitySource.StartActivity("order.pipeline"))
 {
     // ... run the code under test; the span stops at the end of this scope ...
-    await Assert.That(span).HasOperationName("pick.pipeline");
+    await Assert.That(span).HasOperationName("order.pipeline");
 }
 
 // ... or assert on a captured span after the fact:
-await Assert.That(capture.Captured[0]).HasOperationName("pick.pipeline");
+await Assert.That(capture.Captured[0]).HasOperationName("order.pipeline");
 ```
 
 `SpanCapture.ForSource` starts a raw `ActivityListener` that samples `AllDataAndRecorded` and collects

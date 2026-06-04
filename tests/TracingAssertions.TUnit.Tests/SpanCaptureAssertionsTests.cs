@@ -22,12 +22,12 @@ internal sealed class SpanCaptureAssertionsTests
         using var source = new ActivitySource("TracingAssertions.TUnit.Tests.HasSpanPass");
         using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.HasSpanPass");
 
-        using (source.StartActivity("pick.pipeline"))
+        using (source.StartActivity("order.pipeline"))
         {
             // The span is captured when the using scope closes.
         }
 
-        await Assert.That(capture).HasSpan("pick.pipeline");
+        await Assert.That(capture).HasSpan("order.pipeline");
     }
 
     [Test]
@@ -44,10 +44,10 @@ internal sealed class SpanCaptureAssertionsTests
 
         var exception = await Assert.That(async () =>
         {
-            await Assert.That(capture).HasSpan("pick.pipeline");
+            await Assert.That(capture).HasSpan("order.pipeline");
         }).Throws<AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("pick.pipeline");
+        await Assert.That(exception!.Message).Contains("order.pipeline");
         await Assert.That(exception.Message).Contains("other.op");
     }
 
@@ -70,7 +70,7 @@ internal sealed class SpanCaptureAssertionsTests
 
         var exception = await Assert.That(async () =>
         {
-            await Assert.That(capture).HasSpan("pick.pipeline");
+            await Assert.That(capture).HasSpan("order.pipeline");
         }).Throws<AssertionException>();
 
         await Assert.That(exception!.Message).Contains("first.op");
@@ -86,7 +86,7 @@ internal sealed class SpanCaptureAssertionsTests
 
         var exception = await Assert.That(async () =>
         {
-            await Assert.That(capture).HasSpan("pick.pipeline");
+            await Assert.That(capture).HasSpan("order.pipeline");
         }).Throws<AssertionException>();
 
         await Assert.That(exception!.Message).Contains("<none>");

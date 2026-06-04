@@ -28,9 +28,9 @@ internal sealed class SpanAssertionsTests
         cancellationToken.ThrowIfCancellationRequested();
         using var source = new ActivitySource("TracingAssertions.TUnit.Tests.OpPass");
         using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.OpPass");
-        using var span = source.StartActivity("pick.pipeline");
+        using var span = source.StartActivity("order.pipeline");
 
-        await Assert.That(span!).HasOperationName("pick.pipeline");
+        await Assert.That(span!).HasOperationName("order.pipeline");
     }
 
     [Test]
