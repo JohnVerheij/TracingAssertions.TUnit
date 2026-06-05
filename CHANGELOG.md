@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-06: package description correction
+
+Metadata-only release. No API or behaviour change.
+
+### Fixed
+
+- Corrected the NuGet package `<Description>`. It described a foundation release carrying only `HasOperationName` and said the full fluent surface "lands in 0.1.0"; the package has shipped the complete surface (operation name, tag existence and value, status, parent/child, same-trace) since 0.1.0. The description now matches the README.
+
+### Added
+
+- README: a short example showing `.Because(reason)` chained on a span assertion, plus a test covering it. `.Because` is inherited from TUnit's base assertion type and has always worked on the generated span assertions; the note makes that explicit.
+
+### Changed
+
+- The release workflow now publishes the matching `CHANGELOG.md` section as the GitHub release body (`body_path`), so release notes carry the full hand-written detail instead of GitHub's auto-generated commit summary.
+
 ## [0.1.1] - 2026-06-05: documentation refresh
 
 Documentation-only release. No API or behaviour change.

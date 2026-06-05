@@ -144,6 +144,13 @@ Expected the span to have operation name "order.created"
   but it was "order.updated"
 ```
 
+Every span assertion also accepts `.Because(reason)` to attach a domain explanation to the failure,
+the same as any other TUnit assertion (it is inherited from the base assertion type):
+
+```csharp
+await Assert.That(span).HasTagValue("process.id", workerId).Because("the worker stamps its pid");
+```
+
 ## Design notes
 
 ### Why a raw `ActivityListener`, not the OpenTelemetry SDK
