@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2] - 2026-06-06: package description correction
 
-Metadata-only release. No API or behaviour change.
+Metadata-only release. No API or behavior change.
 
 ### Fixed
 
@@ -25,7 +25,7 @@ Metadata-only release. No API or behaviour change.
 
 ## [0.1.1] - 2026-06-05: documentation refresh
 
-Documentation-only release. No API or behaviour change.
+Documentation-only release. No API or behavior change.
 
 ### Changed
 

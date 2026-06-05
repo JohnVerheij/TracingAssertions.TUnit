@@ -12,7 +12,7 @@ TUnit-native OpenTelemetry distributed-tracing (`Activity` / span) assertions fo
 
 Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Activity`:
 
-| Entry point | Behaviour |
+| Entry point | Behavior |
 |---|---|
 | `HasOperationName(name)` | Asserts the span's `OperationName` equals `name` (ordinal). |
 | `HasTag(key)` | Asserts a tag `key` is present (non-null value). |
