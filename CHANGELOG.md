@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-05: documentation refresh
+
+Documentation-only release. No API or behaviour change.
+
+### Changed
+
+- Refreshed the README (plain-ASCII punctuation) and rewrote the shared `CONVENTIONS.md`: removed the version-history preamble so it reads as a conventions document, not a changelog.
+
 ## [0.1.0] - 2026-06-04: span-query surface and the full assertion set
 
 Minor release. Completes the foundation surface with multi-source capture, the span-query helpers, and
@@ -63,3 +71,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
 - Planned for 0.1.0: multi-source capture, find-by-operation-name and find-by-name-and-tag queries,
   parent/child navigation, and the tag / status / is-child-of / same-trace assertions, plus a
   capture-level `HasSpan` entry point.
+
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/releases/tag/v0.0.1

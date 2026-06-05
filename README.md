@@ -49,10 +49,7 @@ surface:
 - TUnit `Assert.That(span).HasOperationName(...)` assertions, source-generated via
   `[GenerateAssertion]`.
 
-Capture is a BCL `ActivityListener` over an `ActivitySource` matched by name, so there is **no
-OpenTelemetry SDK dependency, no exporter pipeline, and no NuGet runtime dependency**. AOT-clean from
-day one. The framework-agnostic `TracingAssertions` core ships separately so non-TUnit consumers can
-reuse the capture.
+The framework-agnostic `TracingAssertions` core ships separately so non-TUnit consumers can reuse the capture.
 
 ## Install
 
@@ -183,7 +180,7 @@ Demand-driven; no fixed timeline.
 
 ## Family compatibility
 
-The assertion-family packages: `LogAssertions.TUnit`, `TimeAssertions.TUnit`,
+The eight assertion-family packages: `LogAssertions.TUnit`, `TimeAssertions.TUnit`,
 `SnapshotAssertions.TUnit`, `MathAssertions.TUnit`, `JsonAssertions.TUnit`, `SseAssertions.TUnit`,
 `GrpcAssertions.TUnit`, and `TracingAssertions.TUnit`: release independently and target the same .NET
 TFM at any moment (LTS-anchored, multi-target during STS support windows; see the

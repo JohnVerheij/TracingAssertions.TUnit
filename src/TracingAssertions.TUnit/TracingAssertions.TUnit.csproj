@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>TracingAssertions.TUnit</PackageId>
     <ProductName>TracingAssertions.TUnit</ProductName>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>TUnit-native OpenTelemetry distributed-tracing (Activity / span) assertions for .NET tests. Foundation release with the HasOperationName span assertion over Assert.That(activity); the full fluent surface (tags, status, parent/child, same-trace) lands in 0.1.0. Builds on the TracingAssertions framework-agnostic core. AOT-compatible, trimmable, no runtime reflection in the assertion path, and no NuGet runtime dependency.</Description>
@@ -34,8 +34,8 @@
     <!-- Symbol package + API compat (strict mode quad per dpfa Proj0249/0250/0251/0252) -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <!-- ApiCompat baseline: validate 0.1.0 against the published 0.0.1 surface. -->
-    <PackageValidationBaselineVersion>0.0.1</PackageValidationBaselineVersion>
+    <!-- ApiCompat baseline: pins to the previous shipped version so binary breaks are caught at pack time. -->
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <EnablePackageValidation>true</EnablePackageValidation>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
