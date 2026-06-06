@@ -306,4 +306,19 @@ internal sealed class SpanAssertionsTests
         await Assert.That(() => SpanAssertions.SharesTraceWith(null!, span!)).Throws<ArgumentNullException>();
         await Assert.That(() => SpanAssertions.SharesTraceWith(span!, null!)).Throws<ArgumentNullException>();
     }
+
+    // ---- .Because chaining (inherited from the base assertion type) ----
+
+    [Test]
+    public async Task Because_Chains_On_Span_Assertions(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.Because");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.Because");
+        using var span = source.StartActivity("probe.op");
+        span!.SetTag("process.id", 7);
+
+        await Assert.That(span).HasOperationName("probe.op").Because("the op name is set at start");
+        await Assert.That(span).HasTagValue("process.id", 7).Because("the worker stamps its pid");
+    }
 }
