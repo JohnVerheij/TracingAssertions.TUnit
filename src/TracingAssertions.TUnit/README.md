@@ -30,7 +30,7 @@ The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collec
 dotnet add package TracingAssertions.TUnit
 ```
 
-**Requirements:** TUnit 1.48.6 or later, .NET 10. The framework-agnostic `TracingAssertions` core comes transitively.
+**Requirements:** TUnit 1.50.0 or later, .NET 10. The framework-agnostic `TracingAssertions` core comes transitively.
 
 ## Quick start
 
