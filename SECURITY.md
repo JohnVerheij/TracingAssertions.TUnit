@@ -51,7 +51,7 @@ A **coordinated disclosure** (public CVE filing + advisory + patched release) is
 
 | Version line | Status | Receives security fixes |
 |---|---|---|
-| `0.0.x` | **Current (pre-stable)** | ✅ Yes |
+| `0.1.x` | **Current (pre-stable)** | ✅ Yes |
 
 Both packages (`TracingAssertions` and `TracingAssertions.TUnit`) version in lockstep, so each line covers both. This table is updated alongside each release that bumps the current line. Coverage of older lines for security-only fixes follows the [.NET LTS / STS rotation](CONVENTIONS.md#tfm-policy): when the package's TFM changes at a major-version boundary, security fixes for the previous line continue to ship for one minor cycle.
 

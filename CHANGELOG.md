@@ -88,7 +88,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   parent/child navigation, and the tag / status / is-child-of / same-trace assertions, plus a
   capture-level `HasSpan` entry point.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/releases/tag/v0.0.1
