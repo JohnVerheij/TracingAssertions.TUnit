@@ -187,9 +187,9 @@ Demand-driven; no fixed timeline.
 
 ## Family compatibility
 
-The eight assertion-family packages: `LogAssertions.TUnit`, `TimeAssertions.TUnit`,
+The nine assertion-family packages: `LogAssertions.TUnit`, `TimeAssertions.TUnit`,
 `SnapshotAssertions.TUnit`, `MathAssertions.TUnit`, `JsonAssertions.TUnit`, `SseAssertions.TUnit`,
-`GrpcAssertions.TUnit`, and `TracingAssertions.TUnit`: release independently and target the same .NET
+`GrpcAssertions.TUnit`, `TracingAssertions.TUnit`, and `MetricsAssertions.TUnit`: release independently and target the same .NET
 TFM at any moment (LTS-anchored, multi-target during STS support windows; see the
 [TFM policy in CONVENTIONS.md](CONVENTIONS.md#tfm-policy) for the rotation schedule). **Mix versions
 freely.** Each package ships under SemVer with `EnablePackageValidation` strict-mode ApiCompat against
@@ -204,6 +204,7 @@ its previous baseline, so binary breaks within a version line are caught at pack
 - **[`JsonAssertions.TUnit`](https://www.nuget.org/packages/JsonAssertions.TUnit/)**: fluent JSON assertions over `System.Text.Json` and HTTP response bodies.
 - **[`SseAssertions.TUnit`](https://www.nuget.org/packages/SseAssertions.TUnit/)**: fluent Server-Sent Events wire-format assertions.
 - **[`GrpcAssertions.TUnit`](https://www.nuget.org/packages/GrpcAssertions.TUnit/)**: fluent gRPC outcome assertions plus the `GrpcCallBuilder` test-double helper.
+- **[`MetricsAssertions.TUnit`](https://www.nuget.org/packages/MetricsAssertions.TUnit/)**: fluent assertions over `System.Diagnostics.Metrics` instruments (counters, histograms, gauges), built on `MetricCollector`.
 
 ## Contributing
 
