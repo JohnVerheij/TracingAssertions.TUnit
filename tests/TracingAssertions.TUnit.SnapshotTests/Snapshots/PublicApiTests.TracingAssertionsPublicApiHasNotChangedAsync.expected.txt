@@ -12,6 +12,8 @@ namespace TracingAssertions
         public System.Diagnostics.Activity? FindByOperationName(string operationName) { }
         public System.Diagnostics.Activity? FindByOperationNameAndTag(string operationName, string tagKey, object tagValue) { }
         public static TracingAssertions.SpanCapture ForSource(string sourceName) { }
+        public static TracingAssertions.SpanCapture ForSource(string sourceName, System.Diagnostics.ActivitySamplingResult sampling) { }
         public static TracingAssertions.SpanCapture ForSources(params string[] sourceNames) { }
+        public static TracingAssertions.SpanCapture ForSources(System.Diagnostics.ActivitySamplingResult sampling, params string[] sourceNames) { }
     }
 }

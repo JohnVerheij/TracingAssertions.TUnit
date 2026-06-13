@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>TracingAssertions</PackageId>
     <ProductName>TracingAssertions</ProductName>
-    <Version>0.1.2</Version>
+    <Version>0.2.0</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>Framework-agnostic core for OpenTelemetry distributed-tracing (System.Diagnostics.Activity) assertions in .NET test projects. Captures Activity spans from an ActivitySource through a raw ActivityListener into a disposable, per-test SpanCapture. Foundation release: the fuller span-query surface (find-by-operation-name and tag, parent/child navigation) and the broader fluent assertions land in 0.1.0. Test-framework assertion entry points live in adapter packages (TracingAssertions.TUnit). AOT-compatible, trimmable, no runtime reflection, and no NuGet runtime dependency (System.Diagnostics.DiagnosticSource is in the shared framework).</Description>
@@ -35,7 +35,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- ApiCompat baseline: pins to the previous shipped version so binary breaks are caught at pack time. -->
-    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.1.2</PackageValidationBaselineVersion>
     <EnablePackageValidation>true</EnablePackageValidation>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>

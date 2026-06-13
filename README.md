@@ -123,17 +123,23 @@ Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Act
 | `HasTag(key)` | The span carries a tag `key` with a non-null value. |
 | `HasTagValue(key, value)` | The span's tag `key` matches `value` (compared by invariant `ToString`). |
 | `HasStatus(status)` | The span's `Status` equals the given `ActivityStatusCode`. |
+| `HasKind(kind)` *(v0.2.0+)* | The span's `Kind` equals the given `ActivityKind` (for example `Server` for an inbound request, `Client` for an outbound call). |
 | `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). |
+| `IsRoot()` *(v0.2.0+)* | The span has no parent (its `ParentSpanId` is the default span id). |
+| `HasEvent(name)` *(v0.2.0+)* | The span carries an `ActivityEvent` named `name` (lists the span's event names on failure). |
+| `HasExceptionEvent()` *(v0.2.0+)* | The span carries the OpenTelemetry exception event (an `ActivityEvent` named `exception`). |
 | `SharesTraceWith(other)` | The span shares `other`'s `TraceId`. |
 
-Capture-level assertion on `Assert.That(capture)` where `capture` is a `SpanCapture`:
+Capture-level assertions on `Assert.That(capture)` where `capture` is a `SpanCapture`:
 
 | Assertion | Description |
 |---|---|
 | `HasSpan(operationName)` | The capture contains a span with that operation name (lists the captured names on failure). |
+| `HasNoSpan(operationName)` *(v0.2.0+)* | The capture contains no span with that operation name. |
+| `HasSpanCount(int)` *(v0.2.0+)* | The capture collected exactly that many spans. |
 
 The `SpanCapture` core also exposes query helpers for locating spans without an assertion:
-`FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`.
+`FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`. `ForSource` / `ForSources` accept an optional `ActivitySamplingResult` (v0.2.0+) to capture under a chosen sampling level (see the listener-aggregation caveat in the XML docs).
 
 ## Failure diagnostics
 

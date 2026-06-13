@@ -321,4 +321,172 @@ internal sealed class SpanAssertionsTests
         await Assert.That(span).HasOperationName("probe.op").Because("the op name is set at start");
         await Assert.That(span).HasTagValue("process.id", 7).Because("the worker stamps its pid");
     }
+
+    // ---- HasKind (v0.2.0) ----
+
+    [Test]
+    public async Task HasKind_Matches_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.KindPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.KindPass");
+        using var span = source.StartActivity("inbound", ActivityKind.Server);
+
+        await Assert.That(span!).HasKind(ActivityKind.Server);
+    }
+
+    [Test]
+    public async Task HasKind_Mismatch_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.KindFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.KindFail");
+        using var span = source.StartActivity("outbound", ActivityKind.Client);
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(span!).HasKind(ActivityKind.Server)).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("Server");
+        await Assert.That(exception.Message).Contains("Client");
+    }
+
+    [Test]
+    public async Task HasKind_NullSpan_Throws(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Assert.That(() => SpanAssertions.HasKind(null!, ActivityKind.Server)).Throws<ArgumentNullException>();
+    }
+
+    // ---- IsRoot (v0.2.0) ----
+
+    [Test]
+    public async Task IsRoot_NoParent_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RootPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RootPass");
+
+        // Null out the test runner's ambient activity so the started span is a genuine root rather
+        // than parenting to it; restore it afterwards.
+        var previous = Activity.Current;
+        Activity.Current = null;
+        try
+        {
+            using var span = source.StartActivity("root");
+            await Assert.That(span!).IsRoot();
+        }
+        finally
+        {
+            Activity.Current = previous;
+        }
+    }
+
+    [Test]
+    public async Task IsRoot_WithParent_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RootFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RootFail");
+        using var child = source.StartActivity("child", ActivityKind.Internal, NewRootContext());
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(child!).IsRoot()).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("root");
+    }
+
+    [Test]
+    public async Task IsRoot_NullSpan_Throws(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Assert.That(() => SpanAssertions.IsRoot(null!)).Throws<ArgumentNullException>();
+    }
+
+    // ---- HasEvent / HasExceptionEvent (v0.2.0) ----
+
+    [Test]
+    public async Task HasEvent_Present_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.EventPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.EventPass");
+        using var span = source.StartActivity("op");
+        span!.AddEvent(new ActivityEvent("cache.miss"));
+
+        await Assert.That(span).HasEvent("cache.miss");
+    }
+
+    [Test]
+    public async Task HasEvent_Absent_FailsListingEvents(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.EventFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.EventFail");
+        using var span = source.StartActivity("op");
+        // Two events so the failure message renders the comma-separated list (both branches of the
+        // event-name renderer).
+        span!.AddEvent(new ActivityEvent("cache.hit"));
+        span.AddEvent(new ActivityEvent("db.query"));
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(span).HasEvent("cache.miss")).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("cache.miss");
+        await Assert.That(exception.Message).Contains("\"cache.hit\", \"db.query\"");
+    }
+
+    [Test]
+    public async Task HasEvent_NoEvents_FailsSayingNoEvents(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.EventNone");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.EventNone");
+        using var span = source.StartActivity("op");
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(span!).HasEvent("anything")).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("no events");
+    }
+
+    [Test]
+    public async Task HasEvent_NullArgs_Throw(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.EventNull");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.EventNull");
+        using var span = source.StartActivity("op");
+
+        await Assert.That(() => SpanAssertions.HasEvent(null!, "e")).Throws<ArgumentNullException>();
+        await Assert.That(() => SpanAssertions.HasEvent(span!, null!)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task HasExceptionEvent_Present_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.ExPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.ExPass");
+        using var span = source.StartActivity("op");
+        span!.AddEvent(new ActivityEvent("exception"));
+
+        await Assert.That(span).HasExceptionEvent();
+    }
+
+    [Test]
+    public async Task HasExceptionEvent_Absent_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.ExFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.ExFail");
+        using var span = source.StartActivity("op");
+        span!.AddEvent(new ActivityEvent("ok"));
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(span).HasExceptionEvent()).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("exception event");
+    }
+
+    [Test]
+    public async Task HasExceptionEvent_NullSpan_Throws(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Assert.That(() => SpanAssertions.HasExceptionEvent(null!)).Throws<ArgumentNullException>();
+    }
 }

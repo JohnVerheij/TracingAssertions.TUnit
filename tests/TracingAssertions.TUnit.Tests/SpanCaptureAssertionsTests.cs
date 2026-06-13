@@ -106,4 +106,87 @@ internal sealed class SpanCaptureAssertionsTests
         using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.HasSpanNull");
         await Assert.That(() => SpanCaptureAssertions.HasSpan(capture, null!)).Throws<ArgumentNullException>();
     }
+
+    // ---- HasNoSpan (v0.2.0) ----
+
+    [Test]
+    public async Task HasNoSpan_Absent_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.NoSpanPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.NoSpanPass");
+        using (source.StartActivity("present.op"))
+        { /* span captured on scope exit */ }
+
+        await Assert.That(capture).HasNoSpan("missing.op");
+    }
+
+    [Test]
+    public async Task HasNoSpan_Present_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.NoSpanFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.NoSpanFail");
+        using (source.StartActivity("present.op"))
+        { /* span captured on scope exit */ }
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(capture).HasNoSpan("present.op")).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("present.op");
+    }
+
+    [Test]
+    public async Task HasNoSpan_NullArgs_Throw(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.NoSpanNull");
+        await Assert.That(() => SpanCaptureAssertions.HasNoSpan(null!, "op")).Throws<ArgumentNullException>();
+        await Assert.That(() => SpanCaptureAssertions.HasNoSpan(capture, null!)).Throws<ArgumentNullException>();
+    }
+
+    // ---- HasSpanCount (v0.2.0) ----
+
+    [Test]
+    public async Task HasSpanCount_Matches_Passes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.CountPass");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.CountPass");
+        using (source.StartActivity("a"))
+        { /* span captured on scope exit */ }
+        using (source.StartActivity("b"))
+        { /* span captured on scope exit */ }
+
+        await Assert.That(capture).HasSpanCount(2);
+    }
+
+    [Test]
+    public async Task HasSpanCount_Mismatch_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.CountFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.CountFail");
+        using (source.StartActivity("a"))
+        { /* span captured on scope exit */ }
+
+        var exception = await Assert.That(async () =>
+            await Assert.That(capture).HasSpanCount(3)).Throws<AssertionException>();
+        await Assert.That(exception!.Message).Contains("3");
+        await Assert.That(exception.Message).Contains("1");
+    }
+
+    [Test]
+    public async Task HasSpanCount_NullCapture_Throws(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Assert.That(() => SpanCaptureAssertions.HasSpanCount(null!, 0)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task HasSpanCount_NegativeExpected_Throws(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.CountNeg");
+        await Assert.That(() => SpanCaptureAssertions.HasSpanCount(capture, -1)).Throws<ArgumentOutOfRangeException>();
+    }
 }
