@@ -134,7 +134,7 @@
         "dependencies": {
           "TUnit.Assertions": "[1.54.0, )",
           "TUnit.Core": "[1.54.0, )",
-          "TracingAssertions": "[0.1.2, )"
+          "TracingAssertions": "[0.2.0, )"
         }
       },
       "TUnit.Assertions": {
