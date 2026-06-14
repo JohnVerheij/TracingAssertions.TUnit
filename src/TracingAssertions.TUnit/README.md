@@ -18,11 +18,15 @@ Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Act
 | `HasTag(key)` | Asserts a tag `key` is present (non-null value). |
 | `HasTagValue(key, value)` | Asserts the tag `key` matches `value` (compared by invariant `ToString`). |
 | `HasStatus(status)` | Asserts the span's `Status` equals the given `ActivityStatusCode`. |
+| `HasKind(kind)` *(v0.2.0+)* | Asserts the span's `Kind` equals the given `ActivityKind` (for example `Server` / `Client`). |
 | `IsChildOf(parent)` | Asserts a single-hop parent/child relationship in the same trace. |
+| `IsRoot()` *(v0.2.0+)* | Asserts the span has no parent. |
+| `HasEvent(name)` / `HasExceptionEvent()` *(v0.2.0+)* | Asserts the span carries an `ActivityEvent` with that name / the OpenTelemetry `exception` event. |
 | `SharesTraceWith(other)` | Asserts two spans share a `TraceId`. |
-| `HasSpan(operationName)` (on `SpanCapture`) | Asserts the capture contains a span with that operation name. |
+| `HasSpan(operationName)` / `HasNoSpan(operationName)` *(HasNoSpan v0.2.0+)* (on `SpanCapture`) | Asserts the capture does / does not contain a span with that operation name. |
+| `HasSpanCount(int)` *(v0.2.0+)* (on `SpanCapture`) | Asserts the capture collected exactly that many spans. |
 
-The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from one or more `ActivitySource`s via a raw `ActivityListener` (no OpenTelemetry SDK or NuGet runtime dependency), plus the query helpers `FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`.
+The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from one or more `ActivitySource`s via a raw `ActivityListener` (no OpenTelemetry SDK or NuGet runtime dependency), plus the query helpers `FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`. `ForSource` / `ForSources` take an optional `ActivitySamplingResult` (v0.2.0+) to capture under a chosen sampling level.
 
 ## Install
 

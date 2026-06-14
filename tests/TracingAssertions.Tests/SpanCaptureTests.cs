@@ -261,4 +261,34 @@ internal sealed class SpanCaptureTests
         using var capture = SpanCapture.ForSource("TracingAssertions.Tests.ChildrenNull");
         await Assert.That(() => capture.ChildrenOf(null!)).Throws<ArgumentNullException>();
     }
+
+    // ---- sampling overload (v0.2.0) ----
+
+    [Test]
+    public async Task ForSource_WithSampling_AcceptsResultAndCaptures(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Sampling");
+        // The overload passes the sampling result to the listener; the captured set is unaffected
+        // (effective sampling is the max across all listeners, so IsAllDataRequested is not asserted
+        // here, where the test runner contributes a recording listener).
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Sampling", ActivitySamplingResult.PropagationData);
+        using (source.StartActivity("op"))
+        { /* span captured on scope exit */ }
+
+        await Assert.That(capture.Captured.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task ForSources_WithSampling_CapturesFromMatchingSource(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.SamplingMulti");
+        using var capture = SpanCapture.ForSources(
+            ActivitySamplingResult.AllDataAndRecorded, "TracingAssertions.Tests.SamplingMulti", "other.source");
+        using (source.StartActivity("op"))
+        { /* span captured on scope exit */ }
+
+        await Assert.That(capture.Captured.Count).IsEqualTo(1);
+    }
 }

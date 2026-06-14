@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-14: kind, root, event, and count assertions; sampling control
+
+Minor release. Adds span and capture assertions for ASP.NET Core span testing, plus a sampling-control capture overload. Purely additive.
+
+### Added
+
+- **Span assertions:** `Assert.That(span).HasKind(ActivityKind)` (for example `Server` for an inbound request span), `IsRoot()` (no parent), `HasEvent(name)`, and `HasExceptionEvent()` (the OpenTelemetry `"exception"` event). The event assertions list the span's event names on failure.
+- **Capture assertions:** `Assert.That(capture).HasNoSpan(operationName)` (the inverse of `HasSpan`, for asserting an operation was never traced) and `HasSpanCount(int)`.
+- **`SpanCapture.ForSource(name, ActivitySamplingResult)`** and **`ForSources(ActivitySamplingResult, params string[])`** capture under a chosen sampling result. The existing parameterless forms still force `AllDataAndRecorded`. A lower result (for example `PropagationData`) lets a test exercise code that branches on `Activity.IsAllDataRequested`, with the documented caveat that an activity's effective sampling is the maximum across all active listeners, so this takes effect only when the capture is the sole listener.
+
+### Changed
+
+- Bumped `PackageValidationBaselineVersion` from `0.1.0` to `0.1.2` on both packages so ApiCompat strict-mode validates `0.2.0` against the most recently published baseline.
+
 ## [0.1.2] - 2026-06-06: package description correction
 
 Metadata-only release. No API or behavior change.
@@ -88,7 +102,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   parent/child navigation, and the tag / status / is-child-of / same-trace assertions, plus a
   capture-level `HasSpan` entry point.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.0.1...v0.1.0

@@ -12,7 +12,7 @@ Framework-agnostic core for the TracingAssertions package family. The TUnit-nati
 
 ## What's in this package
 
-- **`SpanCapture`**: a disposable, per-test capture that starts a raw `ActivityListener` (sampling `AllDataAndRecorded`) over one or more `ActivitySource`s matched by name and collects the stopped `System.Diagnostics.Activity` spans. `ForSource(name)` / `ForSources(names)` create one, `Captured` exposes the collected spans in completion order, and `Dispose()` detaches the listener. Use it with a `using` statement for per-test isolation.
+- **`SpanCapture`**: a disposable, per-test capture that starts a raw `ActivityListener` (sampling `AllDataAndRecorded`) over one or more `ActivitySource`s matched by name and collects the stopped `System.Diagnostics.Activity` spans. `ForSource(name)` / `ForSources(names)` create one (with overloads taking an `ActivitySamplingResult` since v0.2.0 to capture under a chosen sampling level), `Captured` exposes the collected spans in completion order, and `Dispose()` detaches the listener. Use it with a `using` statement for per-test isolation.
 - **Query helpers** on the capture: `FindByOperationName(name)`, `FindByOperationNameAndTag(name, tagKey, tagValue)` (tag compared by invariant `ToString`), and `ChildrenOf(parent)` (direct children in the same trace).
 
 No OpenTelemetry SDK, no exporter pipeline, and no NuGet runtime dependency (`System.Diagnostics.DiagnosticSource` is in the shared framework). AOT-compatible, trimmable, no runtime reflection.

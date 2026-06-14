@@ -32,32 +32,53 @@ public sealed class SpanCapture : IDisposable
     private readonly ActivityListener _listener;
     private readonly ConcurrentQueue<Activity> _captured = new();
 
-    private SpanCapture(Func<ActivitySource, bool> shouldListenTo)
+    private SpanCapture(Func<ActivitySource, bool> shouldListenTo, ActivitySamplingResult sampling)
     {
         _listener = new ActivityListener
         {
             ShouldListenTo = shouldListenTo,
-            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            SampleUsingParentId = static (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => sampling,
+            SampleUsingParentId = (ref ActivityCreationOptions<string> _) => sampling,
             ActivityStopped = activity => _captured.Enqueue(activity),
         };
         ActivitySource.AddActivityListener(_listener);
     }
 
     /// <summary>Starts capturing spans from the single <see cref="ActivitySource"/> whose
-    /// <see cref="ActivitySource.Name"/> equals <paramref name="sourceName"/> (ordinal).</summary>
+    /// <see cref="ActivitySource.Name"/> equals <paramref name="sourceName"/> (ordinal), sampling at
+    /// <see cref="ActivitySamplingResult.AllDataAndRecorded"/>.</summary>
     /// <param name="sourceName">The activity-source name to listen to.</param>
     /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
     /// listener at the end of the test.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="sourceName"/> is <see langword="null"/>.</exception>
     public static SpanCapture ForSource(string sourceName)
+        => ForSource(sourceName, ActivitySamplingResult.AllDataAndRecorded);
+
+    /// <summary>Starts capturing spans from the single <see cref="ActivitySource"/> whose
+    /// <see cref="ActivitySource.Name"/> equals <paramref name="sourceName"/> (ordinal), at the given
+    /// <paramref name="sampling"/> result.</summary>
+    /// <remarks>The default <see cref="ForSource(string)"/> forces
+    /// <see cref="ActivitySamplingResult.AllDataAndRecorded"/>, so code that branches on
+    /// <see cref="Activity.IsAllDataRequested"/> always takes the recorded path under test. Pass a
+    /// lower result (for example <see cref="ActivitySamplingResult.PropagationData"/>) to exercise the
+    /// not-fully-sampled branch. Note that an activity's effective sampling is the maximum requested by
+    /// any active listener, so this lower result only takes effect when the capture is the sole
+    /// listener; a co-existing recording listener (for example an OpenTelemetry SDK pipeline) still
+    /// raises the activity to fully recorded.</remarks>
+    /// <param name="sourceName">The activity-source name to listen to.</param>
+    /// <param name="sampling">The sampling result the listener returns for every activity.</param>
+    /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
+    /// listener at the end of the test.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="sourceName"/> is <see langword="null"/>.</exception>
+    public static SpanCapture ForSource(string sourceName, ActivitySamplingResult sampling)
     {
         ArgumentNullException.ThrowIfNull(sourceName);
-        return new SpanCapture(source => string.Equals(source.Name, sourceName, StringComparison.Ordinal));
+        return new SpanCapture(source => string.Equals(source.Name, sourceName, StringComparison.Ordinal), sampling);
     }
 
     /// <summary>Starts capturing spans from any <see cref="ActivitySource"/> whose
-    /// <see cref="ActivitySource.Name"/> is one of <paramref name="sourceNames"/> (ordinal).</summary>
+    /// <see cref="ActivitySource.Name"/> is one of <paramref name="sourceNames"/> (ordinal), sampling
+    /// at <see cref="ActivitySamplingResult.AllDataAndRecorded"/>.</summary>
     /// <param name="sourceNames">The activity-source names to listen to. An empty array captures
     /// nothing.</param>
     /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
@@ -65,10 +86,24 @@ public sealed class SpanCapture : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="sourceNames"/> is
     /// <see langword="null"/>.</exception>
     public static SpanCapture ForSources(params string[] sourceNames)
+        => ForSources(ActivitySamplingResult.AllDataAndRecorded, sourceNames);
+
+    /// <summary>Starts capturing spans from any <see cref="ActivitySource"/> whose
+    /// <see cref="ActivitySource.Name"/> is one of <paramref name="sourceNames"/> (ordinal), at the
+    /// given <paramref name="sampling"/> result (see <see cref="ForSource(string, ActivitySamplingResult)"/>
+    /// for why this matters).</summary>
+    /// <param name="sampling">The sampling result the listener returns for every activity.</param>
+    /// <param name="sourceNames">The activity-source names to listen to. An empty array captures
+    /// nothing.</param>
+    /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
+    /// listener at the end of the test.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="sourceNames"/> is
+    /// <see langword="null"/>.</exception>
+    public static SpanCapture ForSources(ActivitySamplingResult sampling, params string[] sourceNames)
     {
         ArgumentNullException.ThrowIfNull(sourceNames);
         var set = new HashSet<string>(sourceNames, StringComparer.Ordinal);
-        return new SpanCapture(source => set.Contains(source.Name));
+        return new SpanCapture(source => set.Contains(source.Name), sampling);
     }
 
     /// <summary>The spans captured so far, in completion (activity-stopped) order. Each access
