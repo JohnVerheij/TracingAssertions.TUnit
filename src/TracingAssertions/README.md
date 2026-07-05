@@ -1,6 +1,6 @@
 # TracingAssertions
 
-> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family. This is the framework-agnostic core; the TUnit assertions live in the matching `.TUnit` package.
 
 
 [![NuGet](https://img.shields.io/nuget/v/TracingAssertions.svg)](https://www.nuget.org/packages/TracingAssertions/)
