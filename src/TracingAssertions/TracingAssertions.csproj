@@ -15,7 +15,7 @@
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>Framework-agnostic core for OpenTelemetry distributed-tracing (System.Diagnostics.Activity) assertions in .NET test projects. Captures Activity spans from an ActivitySource through a raw ActivityListener into a disposable, per-test SpanCapture. Foundation release: the fuller span-query surface (find-by-operation-name and tag, parent/child navigation) and the broader fluent assertions land in 0.1.0. Test-framework assertion entry points live in adapter packages (TracingAssertions.TUnit). AOT-compatible, trimmable, no runtime reflection, and no NuGet runtime dependency (System.Diagnostics.DiagnosticSource is in the shared framework).</Description>
-    <PackageTags>tracing;opentelemetry;activity;distributed-tracing;spans;testing;assertions;dotnet;aot</PackageTags>
+    <PackageTags>assertions;testing;tracing;opentelemetry;activity;distributed-tracing;spans;dotnet;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/TracingAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

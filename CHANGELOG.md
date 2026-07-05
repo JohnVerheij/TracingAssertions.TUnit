@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> *History note:* All version sections were reformatted on 2026-07-05 for one-time
+> [CONVENTIONS &sect;CHANGELOG](CONVENTIONS.md) conformance: forbidden sub-headers folded into
+> the six Keep a Changelog headers, non-user-facing content removed (internal refactors, test
+> counts, coverage numbers, CI and build hygiene, governance churn, roadmap notes), bullets
+> kept in past-tense active voice with code-formatted API leads. The nuget.org Release Notes
+> tab and the GitHub Release for each shipped version are unchanged. A CI `changelog-lint` gate
+> keeps future sections conforming; each is frozen per Rule 7 once shipped.
+
 ## [Unreleased]
 
 ## [0.2.0] - 2026-06-14: kind, root, event, and count assertions; sampling control
@@ -17,25 +25,17 @@ Minor release. Adds span and capture assertions for ASP.NET Core span testing, p
 - **Capture assertions:** `Assert.That(capture).HasNoSpan(operationName)` (the inverse of `HasSpan`, for asserting an operation was never traced) and `HasSpanCount(int)`.
 - **`SpanCapture.ForSource(name, ActivitySamplingResult)`** and **`ForSources(ActivitySamplingResult, params string[])`** capture under a chosen sampling result. The existing parameterless forms still force `AllDataAndRecorded`. A lower result (for example `PropagationData`) lets a test exercise code that branches on `Activity.IsAllDataRequested`, with the documented caveat that an activity's effective sampling is the maximum across all active listeners, so this takes effect only when the capture is the sole listener.
 
-### Changed
-
-- Bumped `PackageValidationBaselineVersion` from `0.1.0` to `0.1.2` on both packages so ApiCompat strict-mode validates `0.2.0` against the most recently published baseline.
-
 ## [0.1.2] - 2026-06-06: package description correction
 
 Metadata-only release. No API or behavior change.
 
+### Changed
+
+- README: a short example showing `.Because(reason)` chained on a span assertion. `.Because` is inherited from TUnit's base assertion type and has always worked on the generated span assertions; the note makes that explicit.
+
 ### Fixed
 
 - Corrected the NuGet package `<Description>`. It described a foundation release carrying only `HasOperationName` and said the full fluent surface "lands in 0.1.0"; the package has shipped the complete surface (operation name, tag existence and value, status, parent/child, same-trace) since 0.1.0. The description now matches the README.
-
-### Added
-
-- README: a short example showing `.Because(reason)` chained on a span assertion, plus a test covering it. `.Because` is inherited from TUnit's base assertion type and has always worked on the generated span assertions; the note makes that explicit.
-
-### Changed
-
-- The release workflow now publishes the matching `CHANGELOG.md` section as the GitHub release body (`body_path`), so release notes carry the full hand-written detail instead of GitHub's auto-generated commit summary.
 
 ## [0.1.1] - 2026-06-05: documentation refresh
 
@@ -43,7 +43,7 @@ Documentation-only release. No API or behavior change.
 
 ### Changed
 
-- Refreshed the README (plain-ASCII punctuation) and rewrote the shared `CONVENTIONS.md`: removed the version-history preamble so it reads as a conventions document, not a changelog.
+- Refreshed the README (plain-ASCII punctuation).
 
 ## [0.1.0] - 2026-06-04: span-query surface and the full assertion set
 
@@ -72,13 +72,6 @@ additive; the `0.0.1` ApiCompat baseline is preserved.
   - `Assert.That(capture).HasSpan(operationName)` asserts the capture contains a span with that
     operation name, listing the captured names on failure.
 
-### Notes
-
-- Still no OpenTelemetry SDK dependency: capture remains a raw `ActivityListener`. AOT-compatible,
-  trimmable, no runtime reflection in the assertion path.
-- Deferred (no current demand): span events / links / baggage, duration and kind assertions,
-  multi-level child-chain matchers, and tag type-aware (non-`ToString`) matching.
-
 ## [0.0.1] - 2026-06-04: foundation release
 
 First published release. It establishes the repository, the CI and release pipeline, and the two
@@ -94,13 +87,7 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   (`System.Diagnostics.DiagnosticSource` is in the shared framework).
 - **Adapter `TracingAssertions.TUnit`:** the `HasOperationName` span assertion, generated via TUnit's
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
-
-### Notes
-
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
-- Planned for 0.1.0: multi-source capture, find-by-operation-name and find-by-name-and-tag queries,
-  parent/child navigation, and the tag / status / is-child-of / same-trace assertions, plus a
-  capture-level `HasSpan` entry point.
 
 [unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0

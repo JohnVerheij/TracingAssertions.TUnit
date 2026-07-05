@@ -1,0 +1,51 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "..",
+          "files": [
+            "src/TracingAssertions/TracingAssertions.csproj",
+            "src/TracingAssertions.TUnit/TracingAssertions.TUnit.csproj"
+          ]
+        }
+      ],
+      "dest": "api",
+      "outputFormat": "mref",
+      "memberLayout": "samePage",
+      "includePrivateMembers": false,
+      "disableGitFeatures": false,
+      "filter": "filterConfig.yml"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["**/*.{md,yml}"],
+        "exclude": ["_site/**", "obj/**"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["CNAME", "robots.txt", "public/**"]
+      }
+    ],
+    "output": "_site",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appName": "TracingAssertions.TUnit",
+      "_appTitle": "TracingAssertions.TUnit",
+      "_appFooter": "MIT. Copyright (c) 2026 John Verheij.",
+      "_enableSearch": true,
+      "_enableNewTab": true,
+      "_disableContribution": true,
+      "_disableBreadcrumb": true
+    },
+    "markdownEngineName": "markdig",
+    "sitemap": {
+      "baseUrl": "https://tracingassertions.dev/",
+      "priority": 0.5,
+      "changefreq": "monthly"
+    }
+  }
+}
