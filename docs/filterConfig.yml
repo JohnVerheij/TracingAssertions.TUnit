@@ -1,5 +1,5 @@
 apiRules:
-- include:
-    uidRegex: ^TracingAssertions(\.TUnit)?(\..+)?$
 - exclude:
     uidRegex: .*\.Internal\..*
+- include:
+    uidRegex: ^TracingAssertions(\.TUnit)?(\..+)?$
