@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > the six Keep a Changelog headers, non-user-facing content removed (internal refactors, test
 > counts, coverage numbers, CI and build hygiene, governance churn, roadmap notes), bullets
 > kept in past-tense active voice with code-formatted API leads. The nuget.org Release Notes
-> tab and the GitHub Release for each shipped version are unchanged. A CI `changelog-lint` gate
+> tab and the GitHub Release for each shipped version are unchanged. A CI `family-lint` gate
 > keeps future sections conforming; each is frozen per Rule 7 once shipped.
 
 ## [Unreleased]
@@ -31,7 +31,7 @@ Metadata-only release. No API or behavior change.
 
 ### Changed
 
-- README: a short example showing `.Because(reason)` chained on a span assertion. `.Because` is inherited from TUnit's base assertion type and has always worked on the generated span assertions; the note makes that explicit.
+- `.Because(reason)`: added a README example showing it chained on a span assertion. Inherited from TUnit's base assertion type and has always worked on the generated span assertions; the note makes that explicit.
 
 ### Fixed
 
