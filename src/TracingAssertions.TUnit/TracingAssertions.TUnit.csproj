@@ -15,7 +15,7 @@
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
     <Description>TUnit-native OpenTelemetry distributed-tracing (Activity / span) assertions for .NET tests: fluent Assert.That(activity) entry points for operation name, tag existence and value, status, and single-hop parent/child and same-trace relationships. Span capture is a raw ActivityListener over an ActivitySource. Builds on the TracingAssertions framework-agnostic core. AOT-compatible, trimmable, no runtime reflection in the assertion path, and no NuGet runtime dependency.</Description>
-    <PackageTags>tunit;tracing;opentelemetry;activity;distributed-tracing;spans;testing;assertions;dotnet;aot</PackageTags>
+    <PackageTags>tunit;assertions;testing;tracing;opentelemetry;activity;distributed-tracing;spans;dotnet;aot</PackageTags>
     <PackageProjectUrl>https://github.com/JohnVerheij/TracingAssertions.TUnit</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

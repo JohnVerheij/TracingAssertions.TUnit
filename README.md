@@ -13,6 +13,8 @@ TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent
 
 > **Scope:** Test projects only. Not intended for production code.
 
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family of assertion extensions for TUnit.
+
 ---
 
 ## Table of contents

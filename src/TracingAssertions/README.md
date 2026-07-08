@@ -6,6 +6,8 @@
 
 > **Scope:** Test projects only. Not intended for production code.
 
+> Part of the **[DotNetAssertions](https://dotnetassertions.dev)** family. This is the framework-agnostic core; the TUnit assertions live in the matching `.TUnit` package.
+
 Framework-agnostic core for the TracingAssertions package family. The TUnit-native fluent assertion entry points ship in the adapter package [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit/).
 
 > **Most users want [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit/), not this package directly.** Install this core directly only when authoring a non-TUnit adapter or when you only need the span-capture primitive.
