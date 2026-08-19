@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.163, )",
-        "resolved": "3.0.163",
-        "contentHash": "l9iZ+OXBGlAFEKH1y4BSKPXHcmpJmikysSm0brjTau8fR7Qm7IVGLVig+dh0RH9mq4s3neZayuPQrHRweOpxxw=="
+        "requested": "[3.0.170, )",
+        "resolved": "3.0.170",
+        "contentHash": "Q1a3mi5sbiORt/NQQgtVFpvTIZ1udgXRSqaDTFavGaVOM1CaM1qvtnb/5z3AOV+1jgcTy+CFH5PlyffHSsnCBg=="
       },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",
