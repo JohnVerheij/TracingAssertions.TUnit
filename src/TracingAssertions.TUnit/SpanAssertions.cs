@@ -228,7 +228,7 @@ public static class SpanAssertions
     {
         ArgumentNullException.ThrowIfNull(span);
 
-        return span.Events.Any(spanEvent => string.Equals(spanEvent.Name, "exception", StringComparison.Ordinal))
+        return span.Events.Any(static spanEvent => string.Equals(spanEvent.Name, "exception", StringComparison.Ordinal))
             ? AssertionResult.Passed
             : AssertionResult.Failed(string.Concat(
                 "the span to have an exception event\n  but it had ", DescribeEventNames(span)));
