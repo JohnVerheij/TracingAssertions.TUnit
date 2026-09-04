@@ -63,7 +63,7 @@ dotnet add package TracingAssertions.TUnit
 dotnet add package TracingAssertions
 ```
 
-**Requirements:** TUnit 1.65.68 or later, .NET 10. AOT-compatible, trimmable.
+**Requirements:** TUnit 1.66.8 or later, .NET 10. AOT-compatible, trimmable.
 
 ## Package layout
 
