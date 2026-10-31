@@ -3,6 +3,7 @@
 [![CI](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/codeql.yml/badge.svg)](https://github.com/JohnVerheij/TracingAssertions.TUnit/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/JohnVerheij/TracingAssertions.TUnit/badge)](https://scorecard.dev/viewer/?uri=github.com/JohnVerheij/TracingAssertions.TUnit)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16145/badge)](https://www.bestpractices.dev/projects/16145)
 [![codecov](https://codecov.io/gh/JohnVerheij/TracingAssertions.TUnit/branch/main/graph/badge.svg)](https://codecov.io/gh/JohnVerheij/TracingAssertions.TUnit)
 [![NuGet](https://img.shields.io/nuget/v/TracingAssertions.TUnit.svg)](https://www.nuget.org/packages/TracingAssertions.TUnit/)
 [![Downloads](https://img.shields.io/nuget/dt/TracingAssertions.TUnit.svg)](https://www.nuget.org/packages/TracingAssertions.TUnit/)
