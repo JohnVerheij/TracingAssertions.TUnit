@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-01: worked example, parallel-test guidance
+
+Patch release. No API or behavior change.
+
+### Changed
+
+- **README:** a worked example for one operation traced as a parent span with a child span, scoped to a root activity the test starts (`ChildrenOf(root)`), with the three rules every tracing test follows; a section on parallel tests (the listener is process-wide, so whole-capture assertions see other tests' spans); a section on the test runner's own activity (inside a TUnit test, the code's spans have TUnit's test activity as parent while its HTML report is on, so `IsRoot()` fails for them, and a lower sampling result takes effect only outside the test's trace); a roadmap that lists what 0.2.0 shipped; and a quick start that declares its `ActivitySource`.
+- **`SpanCapture` XML docs:** the same parallel-test note.
+- **NuGet descriptions** of both packages list the current assertion surface; the core's no longer calls itself a foundation release.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.77.0.
+
 ## [0.2.0] - 2026-06-14: kind, root, event, and count assertions; sampling control
 
 Minor release. Adds span and capture assertions for ASP.NET Core span testing, plus a sampling-control capture overload. Purely additive.
@@ -89,7 +100,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.0...v0.1.1

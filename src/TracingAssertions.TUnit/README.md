@@ -44,15 +44,37 @@ dotnet add package TracingAssertions.TUnit
 using System.Diagnostics;
 using TracingAssertions;
 
+using var source = new ActivitySource("MyCompany.MyService");
 using var capture = SpanCapture.ForSource("MyCompany.MyService");
 
-using (var span = MyActivitySource.StartActivity("order.created"))
+using (source.StartActivity("order.created"))
 {
-    await Assert.That(span).HasOperationName("order.created");
+    // ... the code under test runs here ...
 }
+
+await Assert.That(capture).HasSpan("order.created");
 ```
 
-The full reference is in the [GitHub README](https://github.com/JohnVerheij/TracingAssertions.TUnit#readme).
+Create the capture before the code runs (`StartActivity` returns `null` when nothing listens), assert
+after the spans stopped, and scope the assertions to a root activity the test starts
+(`capture.ChildrenOf(root)`): the listener is process-wide, so tests running in parallel see each
+other's spans, and inside a TUnit test the code's spans have the test runner's activity as parent. The
+[worked example](https://github.com/JohnVerheij/TracingAssertions.TUnit#worked-example-one-operation-two-spans)
+shows the pattern; the [GitHub README](https://github.com/JohnVerheij/TracingAssertions.TUnit#readme)
+has the full reference.
+
+## Family
+
+Part of an assertion family for TUnit:
+
+- [LogAssertions.TUnit](https://github.com/JohnVerheij/LogAssertions.TUnit)
+- [SnapshotAssertions.TUnit](https://github.com/JohnVerheij/SnapshotAssertions.TUnit)
+- [TimeAssertions.TUnit](https://github.com/JohnVerheij/TimeAssertions.TUnit)
+- [MathAssertions.TUnit](https://github.com/JohnVerheij/MathAssertions.TUnit)
+- [JsonAssertions.TUnit](https://github.com/JohnVerheij/JsonAssertions.TUnit)
+- [SseAssertions.TUnit](https://github.com/JohnVerheij/SseAssertions.TUnit)
+- [GrpcAssertions.TUnit](https://github.com/JohnVerheij/GrpcAssertions.TUnit)
+- [MetricsAssertions.TUnit](https://github.com/JohnVerheij/MetricsAssertions.TUnit)
 
 ## License
 

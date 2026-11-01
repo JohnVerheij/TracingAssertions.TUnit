@@ -26,6 +26,12 @@ namespace TracingAssertions;
 /// <see cref="FindByOperationNameAndTag"/>, <see cref="ChildrenOf"/>) read the captured set without
 /// advancing any clock.
 /// </para>
+/// <para>
+/// The listener is process-wide: while the capture is active, it also collects the spans that other
+/// code, including tests running in parallel, emits on the listened sources. To keep such tests
+/// independent, serialize the tests that share a source, or start a root <see cref="Activity"/> in the
+/// test and query its children with <see cref="ChildrenOf"/>.
+/// </para>
 /// </remarks>
 public sealed class SpanCapture : IDisposable
 {

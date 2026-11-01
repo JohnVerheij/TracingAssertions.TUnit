@@ -11,12 +11,12 @@
     <IsPackable>true</IsPackable>
     <PackageId>TracingAssertions.TUnit</PackageId>
     <ProductName>TracingAssertions.TUnit</ProductName>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>TUnit-native OpenTelemetry distributed-tracing (Activity / span) assertions for .NET tests: fluent Assert.That(activity) entry points for operation name, tag existence and value, status, and single-hop parent/child and same-trace relationships. Span capture is a raw ActivityListener over an ActivitySource. Builds on the TracingAssertions framework-agnostic core. AOT-compatible, trimmable, no runtime reflection in the assertion path, and no NuGet runtime dependency.</Description>
+    <Description>TUnit-native OpenTelemetry distributed-tracing (Activity / span) assertions for .NET tests: fluent Assert.That(span) entry points for operation name, tags, status, kind, events, and parent/child, root and same-trace relationships, plus Assert.That(capture) checks for span presence and count. Span capture is a raw ActivityListener over an ActivitySource. Builds on the TracingAssertions framework-agnostic core. AOT-compatible, trimmable, no runtime reflection in the assertion path, and no NuGet runtime dependency.</Description>
     <PackageTags>tunit;assertions;testing;tracing;opentelemetry;activity;distributed-tracing;spans;dotnet;aot</PackageTags>
-    <PackageProjectUrl>https://github.com/JohnVerheij/TracingAssertions.TUnit</PackageProjectUrl>
+    <PackageProjectUrl>https://tracingassertions.dev</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- Fallback: nuget.org renders this as a clickable link to the matching GitHub release.
@@ -35,7 +35,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- ApiCompat baseline: pins to the previous shipped version so binary breaks are caught at pack time. -->
-    <PackageValidationBaselineVersion>0.1.2</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.2.0</PackageValidationBaselineVersion>
     <EnablePackageValidation>true</EnablePackageValidation>
     <EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
     <EnableStrictModeForBaselineValidation>true</EnableStrictModeForBaselineValidation>
