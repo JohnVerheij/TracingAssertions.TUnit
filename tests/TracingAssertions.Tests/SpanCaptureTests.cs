@@ -213,6 +213,65 @@ internal sealed class SpanCaptureTests
             .Throws<ArgumentNullException>();
     }
 
+    // ---- process-wide listener ----
+
+    [Test]
+    public async Task ConcurrentCaptures_OnTheSameSource_BothCollectTheSpan(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Shared");
+        using var first = SpanCapture.ForSource("TracingAssertions.Tests.Shared");
+        using var second = SpanCapture.ForSource("TracingAssertions.Tests.Shared");
+
+        using (source.StartActivity("op.shared"))
+        {
+            // One span, seen by every capture active on the source (as with tests running in parallel).
+        }
+
+        await Assert.That(first.Captured).HasSingleItem();
+        await Assert.That(second.Captured).HasSingleItem();
+    }
+
+    [Test]
+    public async Task ChildrenOf_TestOwnedRoot_ExcludesSpansFromOtherTraces(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Scoped");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Scoped");
+
+        using (source.StartActivity("op.other"))
+        {
+            // Another test's span: captured, but outside this test's trace.
+        }
+
+        using var root = new Activity("test");
+        root.Start();
+        using (source.StartActivity("op.mine"))
+        {
+            // Started under the test's root, so it becomes the root's child.
+        }
+
+        var mine = await Assert.That(capture.ChildrenOf(root)).HasSingleItem();
+        await Assert.That(mine.OperationName).IsEqualTo("op.mine");
+        await Assert.That(capture.Captured.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task ForSource_WithPropagationData_OutsideAnyTrace_DoesNotRequestAllData(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.SamplingOutsideTrace");
+        using var capture = SpanCapture.ForSource(
+            "TracingAssertions.Tests.SamplingOutsideTrace", ActivitySamplingResult.PropagationData);
+
+        // Outside the test runner's trace no other listener records the span, so the lower result applies.
+        Activity.Current = null;
+        using var span = source.StartActivity("op");
+
+        await Assert.That(span).IsNotNull();
+        await Assert.That(span!.IsAllDataRequested).IsFalse();
+    }
+
     // ---- ChildrenOf ----
 
     [Test]
