@@ -194,8 +194,8 @@ that runs the code, not only on the tests that capture. Tests with other keys st
 ## Root spans and the test runner
 
 Inside a TUnit test, `Activity.Current` is usually not `null`: TUnit's HTML report, on by default,
-listens to every source and runs each test inside a test activity, and an OpenTelemetry listener in
-the test host does the same. The spans the code starts become children of that activity, so
+listens to every source and runs each test inside a test activity, and so does any other listener that
+records TUnit's own activity sources, such as an OpenTelemetry tracer provider in the test host. The spans the code starts become children of that activity, so
 `IsRoot()` fails for them although the code started no parent. Two consequences:
 
 - **Assert the parent you control:** `IsChildOf(root)`, or `ChildrenOf(root)`, with the test's own
