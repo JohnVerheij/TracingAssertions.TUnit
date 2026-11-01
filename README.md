@@ -186,7 +186,8 @@ Three rules for every tracing test:
 
 The `ActivityListener` behind a capture is process-wide: while the capture is active, it also collects
 the spans that other tests emit on the same source. Assertions scoped to the test's root
-(`ChildrenOf(root)`) are unaffected. Assertions over the whole capture (`HasSpan`, `HasNoSpan`,
+(`ChildrenOf(root)`) are unaffected, and so are lookups by a tag value that only this test uses
+(`FindByOperationNameAndTag("order.place", "order.id", orderId)`). Assertions over the whole capture (`HasSpan`, `HasNoSpan`,
 `HasSpanCount`, `Captured`) and `FindByOperationName` can see another test's spans: serialize the tests
 that emit on the source with a keyed constraint such as `[NotInParallel("Shop.Orders")]`, on every test
 that runs the code, not only on the tests that capture. Tests with other keys still run in parallel.
