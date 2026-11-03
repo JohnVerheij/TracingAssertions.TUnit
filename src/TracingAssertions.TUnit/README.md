@@ -21,14 +21,14 @@ Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Act
 | `HasTagValue(key, value)` | Asserts the tag `key` matches `value` (compared by invariant `ToString`). |
 | `HasStatus(status)` | Asserts the span's `Status` equals the given `ActivityStatusCode`. |
 | `HasKind(kind)` *(v0.2.0+)* | Asserts the span's `Kind` equals the given `ActivityKind` (for example `Server` / `Client`). |
-| `IsChildOf(parent)` | Asserts a single-hop parent/child relationship in the same trace. |
-| `IsRoot()` *(v0.2.0+)* | Asserts the span has no parent. |
+| `IsChildOf(parent)` | Asserts a single-hop parent/child relationship in the same trace (W3C activity IDs, the .NET default). |
+| `IsRoot()` *(v0.2.0+)* | Asserts the span has no parent (W3C activity IDs, the .NET default). |
 | `HasEvent(name)` / `HasExceptionEvent()` *(v0.2.0+)* | Asserts the span carries an `ActivityEvent` with that name / the OpenTelemetry `exception` event. |
 | `SharesTraceWith(other)` | Asserts two spans share a `TraceId`. |
 | `HasSpan(operationName)` / `HasNoSpan(operationName)` *(HasNoSpan v0.2.0+)* (on `SpanCapture`) | Asserts the capture does / does not contain a span with that operation name. |
 | `HasSpanCount(int)` *(v0.2.0+)* (on `SpanCapture`) | Asserts the capture collected exactly that many spans. |
 
-The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from one or more `ActivitySource`s via a raw `ActivityListener` (no OpenTelemetry SDK or NuGet runtime dependency), plus the query helpers `FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`. `ForSource` / `ForSources` take an optional `ActivitySamplingResult` (v0.2.0+) to capture under a chosen sampling level.
+The framework-agnostic core (`TracingAssertions`) ships `SpanCapture` for collecting spans from one or more `ActivitySource`s via a raw `ActivityListener` (no OpenTelemetry SDK or NuGet runtime dependency), plus the query helpers `FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`. `ForSource` and `ForSources` have overloads (v0.2.0+) that take an `ActivitySamplingResult` to capture under a chosen sampling level (the second parameter of `ForSource`, the first of `ForSources`). `ActivitySamplingResult.None` creates no activity, so nothing is captured unless another listener samples it.
 
 ## Install
 
@@ -47,18 +47,26 @@ using TracingAssertions;
 using var source = new ActivitySource("MyCompany.MyService");
 using var capture = SpanCapture.ForSource("MyCompany.MyService");
 
+// Start the test's own root activity so the assertions see this test's spans only.
+using var root = new Activity("test");
+root.Start();
+
 using (source.StartActivity("order.created"))
 {
     // ... the code under test runs here ...
 }
 
-await Assert.That(capture).HasSpan("order.created");
+var span = await Assert.That(capture.ChildrenOf(root)).HasSingleItem();
+await Assert.That(span).HasOperationName("order.created");
 ```
 
-Create the capture before the code runs (`StartActivity` returns `null` when nothing listens), assert
+Create the capture before the code runs (without any listener `StartActivity` returns `null` and the span is not created), assert
 after the spans stopped, and scope the assertions to a root activity the test starts
 (`capture.ChildrenOf(root)`): the listener is process-wide, so tests running in parallel see each
-other's spans, and inside a TUnit test the code's spans have the test runner's activity as parent. The
+other's spans, and inside a TUnit test the code's spans have the test runner's activity as parent when
+TUnit's HTML report (or another listener on TUnit's activity source) is on. `ChildrenOf`, `IsChildOf`,
+`IsRoot`, and `SharesTraceWith` compare W3C activity IDs (the .NET default); with hierarchical IDs the
+`SpanId`, `TraceId`, and `ParentSpanId` are default and these checks are not meaningful. The
 [worked example](https://github.com/JohnVerheij/TracingAssertions.TUnit#worked-example-one-operation-two-spans)
 shows the pattern; the [GitHub README](https://github.com/JohnVerheij/TracingAssertions.TUnit#readme)
 has the full reference.
@@ -78,4 +86,4 @@ Part of an assertion family for TUnit:
 
 ## License
 
-MIT. No runtime dependencies beyond the BCL.
+MIT. The core `TracingAssertions` has no NuGet dependencies; this adapter depends only on TUnit and the core.

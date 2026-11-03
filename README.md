@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent entry points over TUnit's `Assert.That(...)` pipeline for asserting on `System.Diagnostics.Activity` spans, with a framework-agnostic core (`TracingAssertions`) that a future xUnit, NUnit, or MSTest adapter can reuse. AOT-compatible, trimmable, no runtime reflection in the assertion path. No OpenTelemetry SDK and no NuGet runtime dependency: capture is a raw `ActivityListener` over an `ActivitySource`.
+TUnit-native OpenTelemetry distributed-tracing assertions for .NET tests. Fluent entry points over TUnit's `Assert.That(...)` pipeline for asserting on `System.Diagnostics.Activity` spans, with a framework-agnostic core (`TracingAssertions`). AOT-compatible, trimmable, no runtime reflection in the assertion path. No OpenTelemetry SDK: the core has no NuGet dependencies, and the adapter depends only on TUnit and the core. Capture is a raw `ActivityListener` over an `ActivitySource`.
 
 > **Scope:** Test projects only. Not intended for production code.
 
@@ -51,7 +51,7 @@ re-invents the same capture-and-query helper.
 surface:
 
 - A disposable, per-test `SpanCapture` that starts a raw `ActivityListener`
-  (`AllDataAndRecorded`) over an `ActivitySource` and collects the stopped spans.
+  (`AllDataAndRecorded` by default) over an `ActivitySource` and collects the stopped spans.
 - TUnit `Assert.That(span).HasOperationName(...)` assertions, source-generated via
   `[GenerateAssertion]`.
 
@@ -77,8 +77,7 @@ dotnet add package TracingAssertions
 | [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit/) | TUnit adapter: fluent `Assert.That(span)` and `Assert.That(capture)` assertions | `TracingAssertions` + `TUnit.Assertions` + `TUnit.Core` |
 
 Install `TracingAssertions.TUnit` for TUnit test projects; `TracingAssertions` comes transitively.
-Adapters for other test frameworks (NUnit, xUnit, MSTest) are not shipped; they would reuse the
-`TracingAssertions` core. Open a feature request if you need one.
+Adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned; the family targets TUnit.
 
 ## Namespaces
 
@@ -108,18 +107,23 @@ using var source = new ActivitySource("MyCompany.MyService");
 // Capture spans from that source for the duration of a test.
 using var capture = SpanCapture.ForSource("MyCompany.MyService");
 
+// Start the test's own root activity so the assertions see this test's spans only.
+using var root = new Activity("test");
+root.Start();
+
 using (source.StartActivity("order.pipeline"))
 {
     // ... run the code under test; the span stops at the end of this scope ...
 }
 
-await Assert.That(capture).HasSpan("order.pipeline");
-await Assert.That(capture.Captured[0]).HasOperationName("order.pipeline");
+var span = await Assert.That(capture.ChildrenOf(root)).HasSingleItem();
+await Assert.That(span).HasOperationName("order.pipeline");
 ```
 
-`SpanCapture.ForSource` starts a raw `ActivityListener` that samples `AllDataAndRecorded` and collects
-every stopped `Activity` from the named source. Create one per test with `using`;
-disposing it detaches the listener.
+`SpanCapture.ForSource` starts a raw `ActivityListener` that samples `AllDataAndRecorded` by default and
+collects every stopped `Activity` from the named source. Create one per test with `using`;
+disposing it detaches the listener. Querying `ChildrenOf(root)` instead of the whole capture keeps the
+test from passing on another parallel test's span (see [Parallel tests](#parallel-tests)).
 
 ## Worked example: one operation, two spans
 
@@ -173,8 +177,8 @@ public async Task Place_TracesTheOperationWithAChildSpanForTheWrite()
 
 Three rules for every tracing test:
 
-- **Create the capture before the code runs.** `ActivitySource.StartActivity` returns `null` when
-  nothing listens to the source, so a span the code starts before the capture exists is never created.
+- **Create the capture before the code runs.** Without any listener, `StartActivity` returns
+  `null` and the span is not created; the capture only collects spans that stop while it is attached.
 - **Assert after the spans stopped.** The capture collects a span when it stops; a span that is still
   open is not in `Captured` yet.
 - **Start the test's own root.** `new Activity(...)` needs no listener, and while it is
@@ -204,9 +208,12 @@ records TUnit's own activity sources, such as an OpenTelemetry tracer provider i
   before the call; in an `async` test method the change does not leak out of the test.
 - **Sampling:** a lower result passed to `ForSource(name, ActivitySamplingResult)` takes effect only
   when no other listener records the span, because an activity's sampling is the maximum across all
-  listeners. The HTML report records every span in a test's trace, so the lower result applies only
-  to spans outside that trace (`Activity.Current` cleared) or with the report off
-  (`TUNIT_DISABLE_HTML_REPORTER=true`).
+  listeners. The HTML report listens to every source and records every span in a test's trace. With the
+  report on, a result above `PropagationData` (for example `AllData`) applies to spans outside the
+  test's trace (`Activity.Current` cleared); `None` and `PropagationData` are raised to
+  `PropagationData`, so the span is still created and captured. With the report off and no other
+  listener, the chosen result applies everywhere. `ActivitySamplingResult.None` creates no activity, so
+  nothing is captured unless another listener samples it.
 
 ## Entry points
 
@@ -219,11 +226,11 @@ Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Act
 | `HasTagValue(key, value)` | The span's tag `key` matches `value` (compared by invariant `ToString`). |
 | `HasStatus(status)` | The span's `Status` equals the given `ActivityStatusCode`. |
 | `HasKind(kind)` *(v0.2.0+)* | The span's `Kind` equals the given `ActivityKind` (for example `Server` for an inbound request, `Client` for an outbound call). |
-| `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). |
-| `IsRoot()` *(v0.2.0+)* | The span has no parent (its `ParentSpanId` is the default span id). Inside a TUnit test, the code's spans usually have the test runner's activity as parent: see [Root spans and the test runner](#root-spans-and-the-test-runner). |
+| `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). Needs W3C activity IDs, the .NET default; with hierarchical IDs these properties are default and the check is not meaningful. |
+| `IsRoot()` *(v0.2.0+)* | The span has no parent (its `ParentSpanId` is the default span id). Needs W3C activity IDs, the .NET default; with hierarchical IDs every span looks like a root. Inside a TUnit test, the code's spans usually have the test runner's activity as parent: see [Root spans and the test runner](#root-spans-and-the-test-runner). |
 | `HasEvent(name)` *(v0.2.0+)* | The span carries an `ActivityEvent` named `name` (lists the span's event names on failure). |
 | `HasExceptionEvent()` *(v0.2.0+)* | The span carries the OpenTelemetry exception event (an `ActivityEvent` named `exception`). |
-| `SharesTraceWith(other)` | The span shares `other`'s `TraceId`. |
+| `SharesTraceWith(other)` | The span shares `other`'s `TraceId` (W3C activity IDs, the .NET default; hierarchical IDs leave `TraceId` default). |
 
 Capture-level assertions on `Assert.That(capture)` where `capture` is a `SpanCapture`:
 
@@ -234,16 +241,13 @@ Capture-level assertions on `Assert.That(capture)` where `capture` is a `SpanCap
 | `HasSpanCount(int)` *(v0.2.0+)* | The capture collected exactly that many spans. |
 
 The `SpanCapture` core also exposes query helpers for locating spans without an assertion:
-`FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf`. `ForSource` / `ForSources` accept an optional `ActivitySamplingResult` (v0.2.0+) to capture under a chosen sampling level; see [Root spans and the test runner](#root-spans-and-the-test-runner) for when a lower level takes effect.
+`FindByOperationName`, `FindByOperationNameAndTag`, and `ChildrenOf` (which, like `IsChildOf`, needs W3C activity IDs). `ForSource` and `ForSources` have overloads (v0.2.0+) that take an `ActivitySamplingResult` to capture under a chosen sampling level (the second parameter of `ForSource`, the first of `ForSources`); see [Root spans and the test runner](#root-spans-and-the-test-runner) for when a lower level takes effect.
 
 ## Failure diagnostics
 
-`HasOperationName` names both the expected and observed operation name on failure:
-
-```
-Expected the span to have operation name "order.created"
-  but it was "order.updated"
-```
+A failed span assertion names what was expected and what the span had. `HasOperationName`, for example,
+reports the operation name it expected and the one the span carries. TUnit builds the failure text, so
+its exact format can differ between TUnit versions.
 
 Every span assertion also accepts `.Because(reason)` to attach a domain explanation to the failure,
 the same as any other TUnit assertion (it is inherited from the base assertion type):
@@ -256,7 +260,7 @@ await Assert.That(span).HasTagValue("process.id", workerId).Because("the worker 
 
 ### Why a raw `ActivityListener`, not the OpenTelemetry SDK
 
-Capture is a BCL `ActivityListener` over an `ActivitySource`, not an OpenTelemetry `TracerProvider` with an in-memory exporter. That keeps the package at **zero NuGet runtime dependencies** (`System.Diagnostics.DiagnosticSource` is in the shared framework) and AOT-safe, and it matches how production code emits spans (a plain `ActivitySource`) without standing up an SDK pipeline in the test.
+Capture is a BCL `ActivityListener` over an `ActivitySource`, not an OpenTelemetry `TracerProvider` with an in-memory exporter. That keeps the core `TracingAssertions` package free of NuGet dependencies (`System.Diagnostics.DiagnosticSource` is in the shared framework; the adapter depends only on TUnit and the core) and AOT-safe, and it matches how production code emits spans (a plain `ActivitySource`) without standing up an SDK pipeline in the test.
 
 ### Why per-test capture, disposed via `using`
 

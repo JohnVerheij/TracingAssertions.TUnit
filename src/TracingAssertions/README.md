@@ -14,19 +14,19 @@ Framework-agnostic core for the TracingAssertions package family. The TUnit-nati
 
 ## What's in this package
 
-- **`SpanCapture`**: a disposable, per-test capture that starts a raw `ActivityListener` (sampling `AllDataAndRecorded`) over one or more `ActivitySource`s matched by name and collects the stopped `System.Diagnostics.Activity` spans. `ForSource(name)` / `ForSources(names)` create one (with overloads taking an `ActivitySamplingResult` since v0.2.0 to capture under a chosen sampling level), `Captured` exposes the collected spans in completion order, and `Dispose()` detaches the listener. Use it with a `using` statement so the listener lives exactly as long as the test. The listener is process-wide: tests that emit on the same source at the same time see each other's spans, so scope assertions to a root activity the test starts with `ChildrenOf(root)` (see the [worked example](https://github.com/JohnVerheij/TracingAssertions.TUnit#worked-example-one-operation-two-spans)).
-- **Query helpers** on the capture: `FindByOperationName(name)`, `FindByOperationNameAndTag(name, tagKey, tagValue)` (tag compared by invariant `ToString`), and `ChildrenOf(parent)` (direct children in the same trace).
+- **`SpanCapture`**: a disposable, per-test capture that starts a raw `ActivityListener` (sampling `AllDataAndRecorded` by default) over one or more `ActivitySource`s matched by name and collects the stopped `System.Diagnostics.Activity` spans. `ForSource(name)` / `ForSources(names)` create one (with overloads taking an `ActivitySamplingResult` since v0.2.0 to capture under a chosen sampling level), `Captured` exposes the collected spans in completion order, and `Dispose()` detaches the listener. Use it with a `using` statement so the listener lives exactly as long as the test. The listener is process-wide: tests that emit on the same source at the same time see each other's spans, so scope assertions to a root activity the test starts with `ChildrenOf(root)` (see the [worked example](https://github.com/JohnVerheij/TracingAssertions.TUnit#worked-example-one-operation-two-spans)).
+- **Query helpers** on the capture: `FindByOperationName(name)`, `FindByOperationNameAndTag(name, tagKey, tagValue)` (tag compared by invariant `ToString`), and `ChildrenOf(parent)` (direct children in the same trace; this compares W3C activity IDs, the .NET default, and is not meaningful with hierarchical IDs).
 
 No OpenTelemetry SDK, no exporter pipeline, and no NuGet runtime dependency (`System.Diagnostics.DiagnosticSource` is in the shared framework). AOT-compatible, trimmable, no runtime reflection.
 
 ## Install
 
 ```bash
-dotnet add package TracingAssertions.TUnit
+dotnet add package TracingAssertions
 ```
 
-The core (`TracingAssertions`) comes transitively; install it directly only when authoring a non-TUnit adapter for the assertion family.
+TUnit users install the adapter [`TracingAssertions.TUnit`](https://www.nuget.org/packages/TracingAssertions.TUnit/) instead; it brings this core transitively.
 
 ## License
 
-MIT throughout. No runtime dependencies beyond the BCL.
+MIT throughout. No NuGet dependencies.
