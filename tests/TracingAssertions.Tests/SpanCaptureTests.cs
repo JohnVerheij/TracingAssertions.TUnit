@@ -241,7 +241,7 @@ internal sealed class SpanCaptureTests
 
         using (source.StartActivity("op.other"))
         {
-            // Another test's span: captured, but outside this test's trace.
+            // Another test's span: captured, but not under this test's root.
         }
 
         using var root = new Activity("test");
@@ -251,9 +251,15 @@ internal sealed class SpanCaptureTests
             // Started under the test's root, so it becomes the root's child.
         }
 
+        var otherTrace = new ActivityContext(ActivityTraceId.CreateRandom(), root.SpanId, ActivityTraceFlags.Recorded);
+        using (source.StartActivity("op.otherTrace", ActivityKind.Internal, otherTrace))
+        {
+            // The root's span ID as parent, in another trace: only the trace check excludes it.
+        }
+
         var mine = await Assert.That(capture.ChildrenOf(root)).HasSingleItem();
         await Assert.That(mine.OperationName).IsEqualTo("op.mine");
-        await Assert.That(capture.Captured.Count).IsEqualTo(2);
+        await Assert.That(capture.Captured.Count).IsEqualTo(3);
     }
 
     [Test]

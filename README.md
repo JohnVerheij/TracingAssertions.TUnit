@@ -205,7 +205,10 @@ records TUnit's own activity sources, such as an OpenTelemetry tracer provider i
 
 - **Assert the parent you control:** `IsChildOf(root)`, or `ChildrenOf(root)`, with the test's own
   root as in the worked example. For code that must start a new trace, set `Activity.Current = null`
-  before the call; in an `async` test method the change does not leak out of the test.
+  before the call; in an `async` test method the change does not leak out of the test. While it is
+  `null`, a span the test starts outside any other span begins a new trace instead of joining the root
+  it started earlier or the test's activity, so when more spans follow the call, save the previous value
+  and restore it in a `finally` block.
 - **Sampling:** a lower result passed to `ForSource(name, ActivitySamplingResult)` takes effect only
   when no other listener records the span, because an activity's sampling is the maximum across all
   listeners. The HTML report listens to every source and records every span in a test's trace. With the
