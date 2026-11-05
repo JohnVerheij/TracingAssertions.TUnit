@@ -39,4 +39,38 @@ internal sealed class SmokeTest
 
         await Assert.That(span!).HasOperationName("smoke.op");
     }
+
+    [Test]
+    public async Task WorkedExampleParentChildPairResolvesAndPasses(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var capture = SpanCapture.ForSource(OrderService.SourceName);
+        using var root = new Activity("test");
+        root.Start();
+
+        OrderService.Place(orderId: 42);
+
+        var place = await Assert.That(capture.ChildrenOf(root)).HasSingleItem();
+        await Assert.That(place).HasOperationName("order.place")
+            .And.HasKind(ActivityKind.Server)
+            .And.HasTagValue("order.id", 42)
+            .And.HasStatus(ActivityStatusCode.Ok);
+
+        var persist = await Assert.That(capture.ChildrenOf(place)).HasSingleItem();
+        await Assert.That(persist).HasOperationName("order.persist")
+            .And.HasKind(ActivityKind.Client);
+    }
+
+    [Test]
+    public async Task ClearedAmbientActivityMakesTheOperationARoot(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var capture = SpanCapture.ForSource(OrderService.SourceName);
+        Activity.Current = null;
+
+        OrderService.Place(orderId: 7);
+
+        var place = capture.FindByOperationNameAndTag("order.place", "order.id", 7)!;
+        await Assert.That(place).IsRoot();
+    }
 }

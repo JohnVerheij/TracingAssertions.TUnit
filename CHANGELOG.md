@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-05: worked example, parallel-test guidance
+
+Patch release. No API or behavior change.
+
+### Changed
+
+- **README:** a worked example for one operation traced as a parent span with a child span, scoped to a root activity the test starts (`ChildrenOf(root)`), with the three rules every tracing test follows; a section on parallel tests (the listener is process-wide, so whole-capture assertions see other tests' spans); a section on the test runner's own activity (inside a TUnit test, the code's spans have TUnit's test activity as parent while its HTML report (or another listener on TUnit's activity source) is on, so `IsRoot()` fails for them, and a lower sampling result applies only outside the test's trace or with the report off); a roadmap that lists what 0.2.0 shipped; and a quick start that declares its `ActivitySource`.
+- **`SpanCapture` XML docs:** the same parallel-test note.
+- **README quick starts** (root and package READMEs) now scope their assertion to a root activity the test starts (`ChildrenOf(root)`) instead of the whole capture, so it cannot pass on another parallel test's span.
+- **`IsChildOf`**, **`IsRoot`**, **`SharesTraceWith`**, and **`SpanCapture.ChildrenOf`** documentation now says these relationships are compared by W3C activity IDs (the .NET default) and are not meaningful with hierarchical IDs, in the READMEs and the XML docs.
+- **README failure diagnostics** now describes in words what a failed span assertion reports, instead of a verbatim failure text that no longer matches TUnit's output.
+- **`ActivitySamplingResult.None`** is now described as creating no activity, so nothing is captured unless another listener samples it (README, package READMEs, and `SpanCapture` XML docs).
+- **`SpanCapture.ForSource`** and **`SpanCapture.ForSources`** documentation now describes the sampling-result variants as overloads, with the result as the second parameter of `ForSource` and the first of `ForSources`.
+- **README sampling guidance** now says that with TUnit's HTML report on, a result below `PropagationData` is raised to `PropagationData`, while higher results apply to spans outside the test's trace (the report records spans in a known test trace anyway).
+- **README rule on creating the capture first** now says that without any listener `StartActivity` returns `null` and the span is not created, and that the capture only collects spans that stop while it is attached.
+- **Dependency statement** now says the core `TracingAssertions` has no NuGet dependencies and the adapter depends only on TUnit and the core, in the READMEs and the `TracingAssertions.TUnit` package description.
+- **`TracingAssertions`** package README now shows `dotnet add package TracingAssertions` as the install command, with a note that TUnit users install the adapter.
+- **`SpanCapture`** documentation now says sampling defaults to `AllDataAndRecorded` and that the overloads accept another result, and `ForSource` now says it matches every source with that name.
+- **`SpanAssertions`** summary now lists the kind, root, and event assertions.
+- **README** now says adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned.
+- **`PackageProjectUrl`** of both packages now points to `https://tracingassertions.dev`.
+- **NuGet descriptions** of both packages list the current assertion surface; the core's no longer calls itself a foundation release.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.80.0.
+
 ## [0.2.0] - 2026-06-14: kind, root, event, and count assertions; sampling control
 
 Minor release. Adds span and capture assertions for ASP.NET Core span testing, plus a sampling-control capture overload. Purely additive.
@@ -89,7 +113,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.0...v0.1.1

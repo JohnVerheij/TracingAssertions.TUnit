@@ -10,8 +10,9 @@ namespace TracingAssertions;
 /// <summary>
 /// Disposable, per-test capture of <see cref="Activity"/> spans emitted by one or more
 /// <see cref="ActivitySource"/>s. Starts a raw <see cref="ActivityListener"/> sampling at
-/// <see cref="ActivitySamplingResult.AllDataAndRecorded"/> and collects every stopped activity
-/// from the listened source(s). Disposing detaches the listener.
+/// <see cref="ActivitySamplingResult.AllDataAndRecorded"/> by default (the <c>ForSource</c> and
+/// <c>ForSources</c> overloads accept another <see cref="ActivitySamplingResult"/>) and collects every
+/// stopped activity from the listened source(s). Disposing detaches the listener.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -25,6 +26,12 @@ namespace TracingAssertions;
 /// collecting and detaches when disposed. The query helpers (<see cref="FindByOperationName"/>,
 /// <see cref="FindByOperationNameAndTag"/>, <see cref="ChildrenOf"/>) read the captured set without
 /// advancing any clock.
+/// </para>
+/// <para>
+/// The listener is process-wide: while the capture is active, it also collects the spans that other
+/// code, including tests running in parallel, emits on the listened sources. To keep such tests
+/// independent, serialize the tests that share a source, or start a root <see cref="Activity"/> in the
+/// test and query its children with <see cref="ChildrenOf"/>.
 /// </para>
 /// </remarks>
 public sealed class SpanCapture : IDisposable
@@ -44,7 +51,7 @@ public sealed class SpanCapture : IDisposable
         ActivitySource.AddActivityListener(_listener);
     }
 
-    /// <summary>Starts capturing spans from the single <see cref="ActivitySource"/> whose
+    /// <summary>Starts capturing spans from every <see cref="ActivitySource"/> whose
     /// <see cref="ActivitySource.Name"/> equals <paramref name="sourceName"/> (ordinal), sampling at
     /// <see cref="ActivitySamplingResult.AllDataAndRecorded"/>.</summary>
     /// <param name="sourceName">The activity-source name to listen to.</param>
@@ -54,7 +61,7 @@ public sealed class SpanCapture : IDisposable
     public static SpanCapture ForSource(string sourceName)
         => ForSource(sourceName, ActivitySamplingResult.AllDataAndRecorded);
 
-    /// <summary>Starts capturing spans from the single <see cref="ActivitySource"/> whose
+    /// <summary>Starts capturing spans from every <see cref="ActivitySource"/> whose
     /// <see cref="ActivitySource.Name"/> equals <paramref name="sourceName"/> (ordinal), at the given
     /// <paramref name="sampling"/> result.</summary>
     /// <remarks>The default <see cref="ForSource(string)"/> forces
@@ -62,11 +69,17 @@ public sealed class SpanCapture : IDisposable
     /// <see cref="Activity.IsAllDataRequested"/> always takes the recorded path under test. Pass a
     /// lower result (for example <see cref="ActivitySamplingResult.PropagationData"/>) to exercise the
     /// not-fully-sampled branch. Note that an activity's effective sampling is the maximum requested by
-    /// any active listener, so this lower result only takes effect when the capture is the sole
-    /// listener; a co-existing recording listener (for example an OpenTelemetry SDK pipeline) still
-    /// raises the activity to fully recorded.</remarks>
+    /// any active listener, so this lower result only takes effect when no other listener requests a
+    /// higher one; a co-existing recording listener (for example an OpenTelemetry SDK pipeline) still
+    /// raises the activity to fully recorded. <see cref="ActivitySamplingResult.None"/> creates no
+    /// activity, so nothing is captured unless another listener samples it. With TUnit's HTML report on,
+    /// a result below <see cref="ActivitySamplingResult.PropagationData"/> is raised to it; higher
+    /// results apply to spans outside the test's trace (the report records spans in a known test trace
+    /// anyway).</remarks>
     /// <param name="sourceName">The activity-source name to listen to.</param>
-    /// <param name="sampling">The sampling result the listener returns for every activity.</param>
+    /// <param name="sampling">The sampling result the listener returns for every activity.
+    /// <see cref="ActivitySamplingResult.None"/> creates no activity, so nothing is captured unless
+    /// another listener samples it.</param>
     /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
     /// listener at the end of the test.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="sourceName"/> is <see langword="null"/>.</exception>
@@ -92,7 +105,9 @@ public sealed class SpanCapture : IDisposable
     /// <see cref="ActivitySource.Name"/> is one of <paramref name="sourceNames"/> (ordinal), at the
     /// given <paramref name="sampling"/> result (see <see cref="ForSource(string, ActivitySamplingResult)"/>
     /// for why this matters).</summary>
-    /// <param name="sampling">The sampling result the listener returns for every activity.</param>
+    /// <param name="sampling">The sampling result the listener returns for every activity.
+    /// <see cref="ActivitySamplingResult.None"/> creates no activity, so nothing is captured unless
+    /// another listener samples it.</param>
     /// <param name="sourceNames">The activity-source names to listen to. An empty array captures
     /// nothing.</param>
     /// <returns>A disposable capture; dispose it (ideally via <see langword="using"/>) to detach the
@@ -147,6 +162,10 @@ public sealed class SpanCapture : IDisposable
     /// <summary>Returns the captured spans that are direct children of <paramref name="parent"/>: a
     /// span whose <see cref="Activity.ParentSpanId"/> equals <paramref name="parent"/>'s
     /// <see cref="Activity.SpanId"/> and that shares its <see cref="Activity.TraceId"/>.</summary>
+    /// <remarks>The relationship is compared by W3C activity IDs, the .NET default. With hierarchical
+    /// IDs (<see cref="ActivityIdFormat.Hierarchical"/>), <see cref="Activity.SpanId"/>,
+    /// <see cref="Activity.TraceId"/>, and <see cref="Activity.ParentSpanId"/> are all default, so the
+    /// result is not meaningful.</remarks>
     /// <param name="parent">The parent span.</param>
     /// <returns>The direct children, in completion order (possibly empty).</returns>
     /// <exception cref="ArgumentNullException"><paramref name="parent"/> is <see langword="null"/>.</exception>

@@ -10,7 +10,8 @@ namespace TracingAssertions.TUnit;
 /// <summary>
 /// TUnit-native fluent assertions over <see cref="Activity"/> spans (typically captured by
 /// <see cref="TracingAssertions.SpanCapture"/>): operation name, tag existence and value, status,
-/// and single-hop parent/child and same-trace relationships.
+/// kind, root, events (<c>HasKind</c>, <c>IsRoot</c>, <c>HasEvent</c>, <c>HasExceptionEvent</c>), and
+/// single-hop parent/child and same-trace relationships.
 /// </summary>
 /// <remarks>
 /// Source methods carry the <c>[GenerateAssertion]</c> attribute; TUnit's source generator emits
@@ -116,6 +117,8 @@ public static class SpanAssertions
     /// <summary>Asserts that <paramref name="span"/> is a direct child of <paramref name="parent"/>:
     /// its <see cref="Activity.ParentSpanId"/> equals <paramref name="parent"/>'s
     /// <see cref="Activity.SpanId"/> and it shares the same <see cref="Activity.TraceId"/>.</summary>
+    /// <remarks>The relationship is compared by W3C activity IDs, the .NET default. With hierarchical
+    /// IDs the span and trace IDs are default, so the check is not meaningful.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="parent">The expected parent span.</param>
     /// <returns>A passing assertion when the parent/trace relationship holds; otherwise a failing
@@ -139,6 +142,8 @@ public static class SpanAssertions
 
     /// <summary>Asserts that <paramref name="span"/> shares the same <see cref="Activity.TraceId"/>
     /// as <paramref name="other"/> (context propagation across a boundary).</summary>
+    /// <remarks>Needs W3C activity IDs, the .NET default; with hierarchical IDs the trace ID is
+    /// default.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="other">The span expected to be in the same trace.</param>
     /// <returns>A passing assertion when the traces match; otherwise a failing assertion naming the
@@ -180,6 +185,8 @@ public static class SpanAssertions
     /// <summary>Asserts that <paramref name="span"/> is a root span: it has no parent, so its
     /// <see cref="Activity.ParentSpanId"/> is the default (all-zero) span id. A span created under a
     /// propagated remote parent carries that parent's span id and is not a root.</summary>
+    /// <remarks>Needs W3C activity IDs, the .NET default. With hierarchical IDs
+    /// <see cref="Activity.ParentSpanId"/> is always default, so every span looks like a root.</remarks>
     /// <param name="span">The captured span.</param>
     /// <returns>A passing assertion when the span is a root; otherwise a failing assertion naming the
     /// observed parent span.</returns>
