@@ -37,7 +37,7 @@ Patch release. No API or behavior change.
 - **README** now says adapters for other test frameworks (NUnit, xUnit, MSTest) are not planned.
 - **`PackageProjectUrl`** of both packages now points to `https://tracingassertions.dev`.
 - **NuGet descriptions** of both packages list the current assertion surface; the core's no longer calls itself a foundation release.
-- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.77.0.
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.54.0 to 1.80.0.
 
 ## [0.2.0] - 2026-06-14: kind, root, event, and count assertions; sampling control
 
