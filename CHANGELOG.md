@@ -15,6 +15,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Assert.That(capture).HasSpanWithTag(operationName, tagKey, tagValue)`** asserts that the capture holds a span with that operation name and tag value, and awaiting it returns the span, so a test goes on with a span that is not `null` instead of looking it up and checking for `null`. The tag value is compared by its invariant `ToString` form, as in `HasTagValue`. When no span matches, the failure shows every captured span with the tag.
+- **`Assert.That(parent).HasChildSpan(capture, operationName)`** (awaiting it returns the first matching child) and **`HasChildSpanCount(capture, count)`** assert on the direct children of a span.
+- **`Assert.That(span).HasDurationLessThan(max)`** and **`HasDurationAtLeast(min)`** assert on `Activity.Duration`. A span reads the real clock, so bounds need room for a slow machine. A span that has not stopped fails both.
+- **`SpanTreeRenderer.Render(capture, options)`** prints the captured spans as an indented tree: operation name, kind, status and the tags chosen with `SpanTreeOptions.TagKeys`, without ids or durations, siblings in start-time order. The text is stable between runs, so it suits a snapshot test.
+- **.NET 11:** both packages target `net10.0` and `net11.0`.
+
+### Changed
+
+- **Failure texts of every span and capture assertion** now follow one rule: TUnit prints the expectation once (`Expected to have status Error`), and the text after `but` describes what was found (`but it was Ok`), with names and values in single quotes; a value the expectation cannot show appears once, in parentheses. Before, each text started with the expectation again, so TUnit printed it twice. A test that matches on the old wording needs updating.
+- **`HasSpan`, `HasNoSpan` and `HasSpanCount`** show the captured spans as a tree when they fail, where `HasSpan` listed operation names and the other two did not list spans.
+- **`IsChildOf`** names the span's actual parent (by operation name when known) and the expected one when it fails, not only span ids.
+- **Minimum TUnit version** is now 1.83.8.
+
+### Fixed
+
+- **`IsChildOf`, `IsRoot`, `SharesTraceWith` and `SpanCapture.ChildrenOf` with `ActivityIdFormat.Hierarchical` ids.** They compared W3C ids only, which are all default with hierarchical ids, so unrelated spans passed and every span was a root. They now compare `ParentId`, `Id` and `RootId` for hierarchical spans. A hierarchical span is never related to a W3C span. Results for W3C ids are unchanged.
+
 ## [0.2.1] - 2026-11-05: worked example, parallel-test guidance
 
 Patch release. No API or behavior change.

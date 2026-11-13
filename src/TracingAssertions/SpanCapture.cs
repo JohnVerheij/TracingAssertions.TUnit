@@ -125,6 +125,10 @@ public sealed class SpanCapture : IDisposable
     /// returns a snapshot.</summary>
     public IReadOnlyList<Activity> Captured => _captured.ToArray();
 
+    /// <summary>The number of spans captured so far, read without copying the capture the way <see cref="Captured"/>
+    /// does; the count assertions use it so that a large capture stays cheap to assert on.</summary>
+    internal int CapturedCount => _captured.Count;
+
     /// <summary>Returns the first captured span whose <see cref="Activity.OperationName"/> equals
     /// <paramref name="operationName"/> (ordinal), or <see langword="null"/> if none matches.</summary>
     /// <param name="operationName">The operation name to look for.</param>
@@ -159,29 +163,20 @@ public sealed class SpanCapture : IDisposable
                 && TagValueEquals(span.GetTagItem(tagKey), tagValue));
     }
 
-    /// <summary>Returns the captured spans that are direct children of <paramref name="parent"/>: a
-    /// span whose <see cref="Activity.ParentSpanId"/> equals <paramref name="parent"/>'s
-    /// <see cref="Activity.SpanId"/> and that shares its <see cref="Activity.TraceId"/>.</summary>
-    /// <remarks>The relationship is compared by W3C activity IDs, the .NET default. With hierarchical
-    /// IDs (<see cref="ActivityIdFormat.Hierarchical"/>), <see cref="Activity.SpanId"/>,
-    /// <see cref="Activity.TraceId"/>, and <see cref="Activity.ParentSpanId"/> are all default, so the
-    /// result is not meaningful.</remarks>
+    /// <summary>Returns the captured spans that are direct children of <paramref name="parent"/>, found by the
+    /// relationship rules of the span ids in use (see the remarks).</summary>
+    /// <remarks>With W3C activity ids (the .NET default) a child is a span whose
+    /// <see cref="Activity.ParentSpanId"/> equals <paramref name="parent"/>'s <see cref="Activity.SpanId"/> and that
+    /// shares its <see cref="Activity.TraceId"/>. With <see cref="ActivityIdFormat.Hierarchical"/> ids, where those
+    /// are all default, a child is a span whose <see cref="Activity.ParentId"/> equals the parent's
+    /// <see cref="Activity.Id"/>. A hierarchical span is never the child of a W3C span or the reverse.</remarks>
     /// <param name="parent">The parent span.</param>
     /// <returns>The direct children, in completion order (possibly empty).</returns>
     /// <exception cref="ArgumentNullException"><paramref name="parent"/> is <see langword="null"/>.</exception>
     public IReadOnlyList<Activity> ChildrenOf(Activity parent)
     {
         ArgumentNullException.ThrowIfNull(parent);
-        var children = new List<Activity>();
-        foreach (var span in _captured)
-        {
-            if (span.ParentSpanId == parent.SpanId && span.TraceId == parent.TraceId)
-            {
-                children.Add(span);
-            }
-        }
-
-        return children;
+        return _captured.Where(span => SpanRelations.IsChildOf(span, parent)).ToArray();
     }
 
     /// <summary>Compares a span's tag value (as returned by <see cref="Activity.GetTagItem"/>) against

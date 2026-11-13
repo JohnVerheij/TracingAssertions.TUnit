@@ -145,8 +145,8 @@ internal sealed class SpanAssertionsTests
             await Assert.That(span).HasTagValue("process.id", "0");
         }).Throws<AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("to be \"0\"");
-        await Assert.That(exception.Message).Contains("but it was \"1\"");
+        await Assert.That(exception!.Message).Contains("with the expected value");
+        await Assert.That(exception.Message).Contains("but it was '1' (expected '0')");
     }
 
     [Test]
@@ -263,7 +263,7 @@ internal sealed class SpanAssertionsTests
             await Assert.That(rootB).IsChildOf(rootA);
         }).Throws<AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("child of parent span");
+        await Assert.That(exception!.Message).Contains("child of the given parent span");
     }
 
     [Test]
@@ -290,7 +290,7 @@ internal sealed class SpanAssertionsTests
             await Assert.That(rootB).SharesTraceWith(rootA);
         }).Throws<AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("to share trace");
+        await Assert.That(exception!.Message).Contains("share a trace with the given span");
     }
 
     [Test]
@@ -429,7 +429,7 @@ internal sealed class SpanAssertionsTests
         var exception = await Assert.That(async () =>
             await Assert.That(span).HasEvent("cache.miss")).Throws<AssertionException>();
         await Assert.That(exception!.Message).Contains("cache.miss");
-        await Assert.That(exception.Message).Contains("\"cache.hit\", \"db.query\"");
+        await Assert.That(exception.Message).Contains("'cache.hit', 'db.query'");
     }
 
     [Test]

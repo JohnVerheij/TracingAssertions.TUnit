@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <RootNamespace>TracingAssertions</RootNamespace>
     <AssemblyName>TracingAssertions</AssemblyName>
     <IsPublishable>false</IsPublishable>
@@ -14,7 +14,7 @@
     <Version>0.2.1</Version>
     <Authors>John Verheij</Authors>
     <Copyright>Copyright (c) 2026 John Verheij</Copyright>
-    <Description>Framework-agnostic core for OpenTelemetry distributed-tracing (System.Diagnostics.Activity) assertions in .NET test projects. Captures Activity spans from one or more ActivitySources through a raw ActivityListener into a disposable, per-test SpanCapture, with query helpers that find spans by operation name and tag and navigate parent/child relationships. Test-framework assertion entry points live in adapter packages (TracingAssertions.TUnit). AOT-compatible, trimmable, no runtime reflection, and no NuGet runtime dependency (System.Diagnostics.DiagnosticSource is in the shared framework).</Description>
+    <Description>Framework-agnostic core for OpenTelemetry distributed-tracing (System.Diagnostics.Activity) assertions in .NET test projects. Captures Activity spans from one or more ActivitySources through a raw ActivityListener into a disposable, per-test SpanCapture, with query helpers that find spans by operation name and tag and navigate parent/child relationships, and a renderer that prints the captured spans as a tree. Test-framework assertion entry points live in adapter packages (TracingAssertions.TUnit). AOT-compatible, trimmable, no runtime reflection, and no NuGet runtime dependency (System.Diagnostics.DiagnosticSource is in the shared framework).</Description>
     <PackageTags>assertions;testing;tracing;opentelemetry;activity;distributed-tracing;spans;dotnet;aot</PackageTags>
     <PackageProjectUrl>https://tracingassertions.dev</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -71,6 +71,11 @@
          TreatWarningsAsErrors=true the build fails. Test projects do not reference this file
          so PublicApiGenerator and similar reflection-using helpers stay usable in tests. -->
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)../../BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The adapter shares the span-relation rules (W3C and hierarchical ids) instead of copying them. -->
+    <InternalsVisibleTo Include="TracingAssertions.TUnit" />
   </ItemGroup>
 
   <ItemGroup>

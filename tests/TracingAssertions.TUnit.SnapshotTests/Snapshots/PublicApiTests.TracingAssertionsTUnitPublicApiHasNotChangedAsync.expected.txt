@@ -1,9 +1,33 @@
 [assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
 [assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
 [assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/JohnVerheij/TracingAssertions.TUnit")]
-[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v10.0", FrameworkDisplayName=".NET 10.0")]
 namespace TUnit.Assertions.Extensions
 {
+    public sealed class Activity_HasChildSpanCount_SpanCapture_Int_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
+    {
+        public Activity_HasChildSpanCount_SpanCapture_Int_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, TracingAssertions.SpanCapture capture, int expected) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Activity_HasChildSpan_SpanCapture_String_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
+    {
+        public Activity_HasChildSpan_SpanCapture_String_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, TracingAssertions.SpanCapture capture, string operationName) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
+        public new System.Runtime.CompilerServices.TaskAwaiter<System.Diagnostics.Activity> GetAwaiter() { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Activity_HasDurationAtLeast_TimeSpan_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
+    {
+        public Activity_HasDurationAtLeast_TimeSpan_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, System.TimeSpan min) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
+        protected override string GetExpectation() { }
+    }
+    public sealed class Activity_HasDurationLessThan_TimeSpan_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
+    {
+        public Activity_HasDurationLessThan_TimeSpan_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, System.TimeSpan max) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
+        protected override string GetExpectation() { }
+    }
     public sealed class Activity_HasEvent_String_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
     {
         public Activity_HasEvent_String_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, string name) { }
@@ -67,6 +91,18 @@ namespace TUnit.Assertions.Extensions
     public static class SpanAssertions
     {
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.Activity_HasChildSpan_SpanCapture_String_Assertion HasChildSpan<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, TracingAssertions.SpanCapture capture, string operationName, [System.Runtime.CompilerServices.CallerArgumentExpression("capture")] string? captureExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("operationName")] string? operationNameExpression = null)
+            where TActual : System.Diagnostics.Activity { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.Activity_HasChildSpanCount_SpanCapture_Int_Assertion HasChildSpanCount<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, TracingAssertions.SpanCapture capture, int expected, [System.Runtime.CompilerServices.CallerArgumentExpression("capture")] string? captureExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null)
+            where TActual : System.Diagnostics.Activity { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.Activity_HasDurationAtLeast_TimeSpan_Assertion HasDurationAtLeast<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, System.TimeSpan min, [System.Runtime.CompilerServices.CallerArgumentExpression("min")] string? minExpression = null)
+            where TActual : System.Diagnostics.Activity { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
+        public static TUnit.Assertions.Extensions.Activity_HasDurationLessThan_TimeSpan_Assertion HasDurationLessThan<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, System.TimeSpan max, [System.Runtime.CompilerServices.CallerArgumentExpression("max")] string? maxExpression = null)
+            where TActual : System.Diagnostics.Activity { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
         public static TUnit.Assertions.Extensions.Activity_HasEvent_String_Assertion HasEvent<TActual>(this TUnit.Assertions.Core.IAssertionSource<TActual> source, string name, [System.Runtime.CompilerServices.CallerArgumentExpression("name")] string? nameExpression = null)
             where TActual : System.Diagnostics.Activity { }
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2091", Justification="Generic type parameter is only used for property access, not instantiation")]
@@ -102,6 +138,7 @@ namespace TUnit.Assertions.Extensions
         public static TUnit.Assertions.Extensions.SpanCapture_HasNoSpan_String_Assertion HasNoSpan(this TUnit.Assertions.Core.IAssertionSource<TracingAssertions.SpanCapture> source, string operationName, [System.Runtime.CompilerServices.CallerArgumentExpression("operationName")] string? operationNameExpression = null) { }
         public static TUnit.Assertions.Extensions.SpanCapture_HasSpan_String_Assertion HasSpan(this TUnit.Assertions.Core.IAssertionSource<TracingAssertions.SpanCapture> source, string operationName, [System.Runtime.CompilerServices.CallerArgumentExpression("operationName")] string? operationNameExpression = null) { }
         public static TUnit.Assertions.Extensions.SpanCapture_HasSpanCount_Int_Assertion HasSpanCount(this TUnit.Assertions.Core.IAssertionSource<TracingAssertions.SpanCapture> source, int expected, [System.Runtime.CompilerServices.CallerArgumentExpression("expected")] string? expectedExpression = null) { }
+        public static TUnit.Assertions.Extensions.SpanCapture_HasSpanWithTag_String_String_Object_Assertion HasSpanWithTag(this TUnit.Assertions.Core.IAssertionSource<TracingAssertions.SpanCapture> source, string operationName, string tagKey, object tagValue, [System.Runtime.CompilerServices.CallerArgumentExpression("operationName")] string? operationNameExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tagKey")] string? tagKeyExpression = null, [System.Runtime.CompilerServices.CallerArgumentExpression("tagValue")] string? tagValueExpression = null) { }
     }
     public sealed class SpanCapture_HasNoSpan_String_Assertion : TUnit.Assertions.Core.Assertion<TracingAssertions.SpanCapture>
     {
@@ -115,6 +152,13 @@ namespace TUnit.Assertions.Extensions
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<TracingAssertions.SpanCapture> metadata) { }
         protected override string GetExpectation() { }
     }
+    public sealed class SpanCapture_HasSpanWithTag_String_String_Object_Assertion : TUnit.Assertions.Core.Assertion<TracingAssertions.SpanCapture>
+    {
+        public SpanCapture_HasSpanWithTag_String_String_Object_Assertion(TUnit.Assertions.Core.AssertionContext<TracingAssertions.SpanCapture> context, string operationName, string tagKey, object tagValue) { }
+        protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<TracingAssertions.SpanCapture> metadata) { }
+        public new System.Runtime.CompilerServices.TaskAwaiter<System.Diagnostics.Activity> GetAwaiter() { }
+        protected override string GetExpectation() { }
+    }
     public sealed class SpanCapture_HasSpan_String_Assertion : TUnit.Assertions.Core.Assertion<TracingAssertions.SpanCapture>
     {
         public SpanCapture_HasSpan_String_Assertion(TUnit.Assertions.Core.AssertionContext<TracingAssertions.SpanCapture> context, string operationName) { }
@@ -126,34 +170,45 @@ namespace TracingAssertions.TUnit
 {
     public static class SpanAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have a child span named \'{operationName}\'")]
+        public static TUnit.Assertions.Core.AssertionResult<System.Diagnostics.Activity> HasChildSpan(this System.Diagnostics.Activity parent, TracingAssertions.SpanCapture capture, string operationName) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have {expected} child span(s)")]
+        public static TUnit.Assertions.Core.AssertionResult HasChildSpanCount(this System.Diagnostics.Activity parent, TracingAssertions.SpanCapture capture, int expected) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have a duration of at least {min}")]
+        public static TUnit.Assertions.Core.AssertionResult HasDurationAtLeast(this System.Diagnostics.Activity span, System.TimeSpan min) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have a duration less than {max}")]
+        public static TUnit.Assertions.Core.AssertionResult HasDurationLessThan(this System.Diagnostics.Activity span, System.TimeSpan max) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have an event named \'{name}\'")]
         public static TUnit.Assertions.Core.AssertionResult HasEvent(this System.Diagnostics.Activity span, string name) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have an exception event")]
         public static TUnit.Assertions.Core.AssertionResult HasExceptionEvent(this System.Diagnostics.Activity span) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have kind {kind}")]
         public static TUnit.Assertions.Core.AssertionResult HasKind(this System.Diagnostics.Activity span, System.Diagnostics.ActivityKind kind) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have operation name \'{operationName}\'")]
         public static TUnit.Assertions.Core.AssertionResult HasOperationName(this System.Diagnostics.Activity span, string operationName) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have status {status}")]
         public static TUnit.Assertions.Core.AssertionResult HasStatus(this System.Diagnostics.Activity span, System.Diagnostics.ActivityStatusCode status) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have a tag \'{key}\'")]
         public static TUnit.Assertions.Core.AssertionResult HasTag(this System.Diagnostics.Activity span, string key) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to have tag \'{key}\' with the expected value")]
         public static TUnit.Assertions.Core.AssertionResult HasTagValue(this System.Diagnostics.Activity span, string key, object value) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a child of the given parent span")]
         public static TUnit.Assertions.Core.AssertionResult IsChildOf(this System.Diagnostics.Activity span, System.Diagnostics.Activity parent) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to be a root span (no parent)")]
         public static TUnit.Assertions.Core.AssertionResult IsRoot(this System.Diagnostics.Activity span) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to share a trace with the given span")]
         public static TUnit.Assertions.Core.AssertionResult SharesTraceWith(this System.Diagnostics.Activity span, System.Diagnostics.Activity other) { }
     }
     public static class SpanCaptureAssertions
     {
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to include no span named \'{operationName}\'")]
         public static TUnit.Assertions.Core.AssertionResult HasNoSpan(this TracingAssertions.SpanCapture capture, string operationName) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to include a span named \'{operationName}\'")]
         public static TUnit.Assertions.Core.AssertionResult HasSpan(this TracingAssertions.SpanCapture capture, string operationName) { }
-        [TUnit.Assertions.Attributes.GenerateAssertion]
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to contain {expected} span(s)")]
         public static TUnit.Assertions.Core.AssertionResult HasSpanCount(this TracingAssertions.SpanCapture capture, int expected) { }
+        [TUnit.Assertions.Attributes.GenerateAssertion(ExpectationMessage="to include a span named \'{operationName}\' with tag \'{tagKey}\' with the expected v" +
+            "alue")]
+        public static TUnit.Assertions.Core.AssertionResult<System.Diagnostics.Activity> HasSpanWithTag(this TracingAssertions.SpanCapture capture, string operationName, string tagKey, object tagValue) { }
     }
 }
