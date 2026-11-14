@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Assert.That(capture).HasSpanWithTag(operationName, tagKey, tagValue)`** asserts that the capture holds a span with that operation name and tag value, and awaiting it returns the span, so a test goes on with a span that is not `null` instead of looking it up and checking for `null`. The tag value is compared by its invariant `ToString` form, as in `HasTagValue`. When no span matches, the failure shows every captured span with the tag.
+- **`Assert.That(parent).HasChildSpan(capture, operationName)`** (awaiting it returns the first matching child) and **`HasChildSpanCount(capture, count)`** assert on the direct children of a span.
+- **`Assert.That(span).HasDurationLessThan(max)`** and **`HasDurationAtLeast(min)`** assert on `Activity.Duration`. A span reads the real clock, so bounds need room for a slow machine. A span that has not stopped fails both.
+- **`SpanTreeRenderer.Render(capture, options)`** prints the captured spans as an indented tree: operation name, kind, status and the tags chosen with `SpanTreeOptions.TagKeys`, without ids or durations. Siblings are ordered by start time, then operation name, and spans equal in both keep their capture order, so the same capture gives the same text and it suits a snapshot test.
+- **.NET 11:** both packages target `net10.0` and `net11.0`.
+
+### Changed
+
+- **Failure texts of every span and capture assertion** now follow one rule: TUnit prints the expectation once (`Expected to have status Error`), and the text after `but` describes what was found (`but it was Ok`), with names and values in single quotes; a value the expectation cannot show appears once, in parentheses. Before, each text started with the expectation again, so TUnit printed it twice. A test that matches on the old wording needs updating.
+- **`HasSpan`, `HasNoSpan` and `HasSpanCount`** show the captured spans as a tree when they fail, where `HasSpan` listed operation names and the other two did not list spans.
+- **`IsChildOf`** names the span's actual parent (by operation name when known) and the expected one when it fails, not only span ids.
+- **Minimum TUnit version** is now 1.83.8.
+
+### Fixed
+
+- **`IsChildOf`, `IsRoot`, `SharesTraceWith` and `SpanCapture.ChildrenOf` with `ActivityIdFormat.Hierarchical` ids.** They compared W3C ids only, which are all default with hierarchical ids, so unrelated spans passed and every span was a root. They now compare `ParentId`, `Id` and `RootId` for hierarchical spans. A hierarchical span is never related to a W3C span.
+- **`IsChildOf` and `SharesTraceWith` with spans that have not started.** An unstarted span has no ids yet, so every id is default, and two such spans passed both assertions because default equals default. An unstarted span is now nobody's child and shares a trace with no span. `IsRoot` still passes for it, as it has no parent yet.
+- **`IsRoot` with a W3C span whose parent id is not a W3C id** (for example a hierarchical id given to `Activity.SetParentId(string)`). Its parent span id stays default, so it passed as a root although it has a parent. It now fails, and the failure shows the parent id.
+- **Line breaks in activity ids in the failure of `IsChildOf`, `IsRoot` and `SharesTraceWith`.** A parent id, a hierarchical id or a root id is a string the caller supplies (for example through `Activity.SetParentId(string)`) and can hold a line break, which started a new line in the failure. Line breaks in an id are now written as `\n` and `\r`, as they are in names and tag values.
+- **`HasSpanWithTag` failure when the capture grows during the lookup.** The lookup searched one view of the capture and the failure tree showed a later one, so the text could say that no span matched and then list a span that does. The search and the tree now use the same view. `HasSpan` and `HasNoSpan` do the same.
+- **`SpanTreeOptions.TagKeys`** kept the list it was given, so adding a `null` key to that list after the assignment passed the check and failed the render. The options now keep a copy.
+
 ## [0.2.1] - 2026-11-05: worked example, parallel-test guidance
 
 Patch release. No API or behavior change.

@@ -75,7 +75,8 @@ internal sealed class SpanCaptureAssertionsTests
 
         await Assert.That(exception!.Message).Contains("first.op");
         await Assert.That(exception.Message).Contains("second.op");
-        await Assert.That(exception.Message).Contains("\", \"");
+        await Assert.That(exception.Message).Contains("  first.op [Internal, Unset]");
+        await Assert.That(exception.Message).Contains("  second.op [Internal, Unset]");
     }
 
     [Test]
@@ -89,7 +90,7 @@ internal sealed class SpanCaptureAssertionsTests
             await Assert.That(capture).HasSpan("order.pipeline");
         }).Throws<AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("<none>");
+        await Assert.That(exception!.Message).Contains("no spans were captured");
     }
 
     [Test]
