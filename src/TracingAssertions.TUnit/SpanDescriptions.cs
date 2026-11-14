@@ -45,7 +45,7 @@ internal static class SpanDescriptions
 
         // A W3C span whose parent id is not a W3C id has a parent id but no parent span id to show.
         var id = SpanRelations.IsHierarchical(span) || span.ParentSpanId == default
-            ? "id " + span.ParentId
+            ? "id " + EscapeId(span.ParentId)
             : "span " + span.ParentSpanId.ToHexString();
         return span.Parent is { } parent
             ? string.Concat(Quote(parent.OperationName), " (", id, ")")
@@ -57,9 +57,14 @@ internal static class SpanDescriptions
     /// <param name="span">The span.</param>
     /// <returns>The trace id (W3C) or root id (hierarchical).</returns>
     internal static string TraceOf(Activity span)
-        => SpanRelations.IsHierarchical(span)
-            ? span.RootId ?? "none"
-            : span.TraceId.ToHexString();
+    {
+        if (!SpanRelations.IsHierarchical(span))
+        {
+            return span.TraceId.ToHexString();
+        }
+
+        return span.RootId is null ? "none" : EscapeId(span.RootId);
+    }
 
     /// <summary>Describes the children of a span for a failure message, as <c>no child spans</c> or
     /// <c>child spans 'a', 'b'</c>, so the text reads after <c>it had</c>.</summary>
@@ -92,5 +97,12 @@ internal static class SpanDescriptions
     /// <param name="span">The span.</param>
     /// <returns>The identity text.</returns>
     private static string Identity(Activity span)
-        => SpanRelations.IsHierarchical(span) ? "id " + span.Id : "span " + span.SpanId.ToHexString();
+        => SpanRelations.IsHierarchical(span) ? "id " + EscapeId(span.Id) : "span " + span.SpanId.ToHexString();
+
+    /// <summary>Writes an activity id so that it stays on one line. A hierarchical id, a root id and a parent id
+    /// given through <see cref="Activity.SetParentId(string)"/> are caller-supplied strings and can hold a line
+    /// break; a W3C hex id cannot.</summary>
+    /// <param name="id">The id, or <see langword="null"/> for a span that has none.</param>
+    /// <returns>The id with line breaks written out, or an empty string for <see langword="null"/>.</returns>
+    private static string EscapeId(string? id) => id is null ? string.Empty : SpanTreeRenderer.Escape(id);
 }

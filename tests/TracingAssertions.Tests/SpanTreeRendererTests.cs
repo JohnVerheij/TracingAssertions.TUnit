@@ -376,6 +376,28 @@ internal sealed class SpanTreeRendererTests
     }
 
     [Test]
+    public async Task Options_ListChangedAfterAssignment_DoesNotChangeTheOptions(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Tree.OptionsCopy");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Tree.OptionsCopy");
+        using (var span = source.StartActivity("op"))
+        {
+            span!.SetTag("a", 1);
+        }
+
+        var keys = new List<string> { "a" };
+        var options = new SpanTreeOptions { TagKeys = keys };
+
+        // The null key passed the check on assignment; adding one afterwards must not reach the renderer.
+        keys.Add(null!);
+        keys[0] = "other";
+
+        await Assert.That(options.TagKeys.Count).IsEqualTo(1);
+        await Assert.That(SpanTreeRenderer.Render(capture, options)).IsEqualTo("op [Internal, Unset] {a=1}");
+    }
+
+    [Test]
     public async Task Options_EmptyAndFilledTagKeys_AreAccepted(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

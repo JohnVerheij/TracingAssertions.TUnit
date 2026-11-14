@@ -10,7 +10,8 @@ public sealed class SpanTreeOptions
     private IReadOnlyList<string> _tagKeys = [];
 
     /// <summary>The tag keys to show on each span, in this order. A span that does not carry a listed tag omits
-    /// it. The default is empty: only the name, kind and status are shown.</summary>
+    /// it. The default is empty: only the name, kind and status are shown. The options keep a copy of the list
+    /// that is assigned, so changing that list afterwards has no effect.</summary>
     /// <exception cref="ArgumentNullException">The value is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">A key in the value is <see langword="null"/>.</exception>
     public IReadOnlyList<string> TagKeys
@@ -19,15 +20,16 @@ public sealed class SpanTreeOptions
         init
         {
             ArgumentNullException.ThrowIfNull(value);
-            for (var i = 0; i < value.Count; i++)
+
+            // Copy first, then check the copy: the caller's list can change afterwards, and a null key added later
+            // would otherwise fail the render.
+            string[] keys = [.. value];
+            if (Array.Exists(keys, static key => key is null))
             {
-                if (value[i] is null)
-                {
-                    throw new ArgumentException("A tag key must not be null.", nameof(value));
-                }
+                throw new ArgumentException("A tag key must not be null.", nameof(value));
             }
 
-            _tagKeys = value;
+            _tagKeys = keys;
         }
     }
 }

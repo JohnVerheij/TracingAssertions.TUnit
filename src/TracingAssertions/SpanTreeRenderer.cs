@@ -42,16 +42,9 @@ public static class SpanTreeRenderer
         return Render(capture.Captured, options);
     }
 
-    /// <summary>Renders a block for a failure message: the tree indented under a heading line, or a sentence when
-    /// nothing was captured.</summary>
-    /// <param name="capture">The capture to describe.</param>
-    /// <param name="options">The tree options, or <see langword="null"/> for the default.</param>
-    /// <returns>Text that starts with <c>captured spans:</c> or <c>no spans were captured</c>.</returns>
-    internal static string Describe(SpanCapture capture, SpanTreeOptions? options = null)
-        => Describe(capture.Captured, options);
-
-    /// <summary>Renders a block for a failure message from a snapshot of spans the caller already holds, so the
-    /// count and the tree in one message come from the same snapshot.</summary>
+    /// <summary>Renders a block for a failure message from a snapshot of spans the caller already holds: the tree
+    /// indented under a heading line, or a sentence when nothing was captured. The decision, the count and the tree
+    /// in one message come from the same snapshot.</summary>
     /// <param name="spans">The snapshot to describe.</param>
     /// <param name="options">The tree options, or <see langword="null"/> for the default.</param>
     /// <returns>Text that starts with <c>captured spans:</c> or <c>no spans were captured</c>.</returns>

@@ -31,9 +31,11 @@ public static class SpanCaptureAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(operationName);
 
-        return capture.FindByOperationName(operationName) is not null
+        // One snapshot: the search and the tree in a failure come from the same spans.
+        var spans = capture.Captured;
+        return SpanCapture.FindIn(spans, operationName) is not null
             ? AssertionResult.Passed
-            : AssertionResult.Failed("none did; " + SpanTreeRenderer.Describe(capture));
+            : AssertionResult.Failed("none did; " + SpanTreeRenderer.Describe(spans));
     }
 
     /// <summary>Asserts that <paramref name="capture"/> contains a span whose
@@ -61,7 +63,9 @@ public static class SpanCaptureAssertions
         ArgumentNullException.ThrowIfNull(tagKey);
         ArgumentNullException.ThrowIfNull(tagValue);
 
-        var span = capture.FindByOperationNameAndTag(operationName, tagKey, tagValue);
+        // One snapshot: the search and the tree in a failure come from the same spans.
+        var spans = capture.Captured;
+        var span = SpanCapture.FindIn(spans, operationName, tagKey, tagValue);
         if (span is not null)
         {
             return AssertionResult<Activity>.Passed(span);
@@ -71,7 +75,7 @@ public static class SpanCaptureAssertions
             "none did (the value looked for was ",
             SpanDescriptions.QuoteValue(tagValue),
             "); ",
-            SpanTreeRenderer.Describe(capture, new SpanTreeOptions { TagKeys = [tagKey] })));
+            SpanTreeRenderer.Describe(spans, new SpanTreeOptions { TagKeys = [tagKey] })));
     }
 
     /// <summary>Asserts that <paramref name="capture"/> contains no span whose
@@ -89,9 +93,11 @@ public static class SpanCaptureAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(operationName);
 
-        return capture.FindByOperationName(operationName) is null
+        // One snapshot: the search and the tree in a failure come from the same spans.
+        var spans = capture.Captured;
+        return SpanCapture.FindIn(spans, operationName) is null
             ? AssertionResult.Passed
-            : AssertionResult.Failed("at least one did; " + SpanTreeRenderer.Describe(capture));
+            : AssertionResult.Failed("at least one did; " + SpanTreeRenderer.Describe(spans));
     }
 
     /// <summary>Asserts that <paramref name="capture"/> captured exactly <paramref name="expected"/>

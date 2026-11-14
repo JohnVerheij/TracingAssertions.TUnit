@@ -138,9 +138,31 @@ public sealed class SpanCapture : IDisposable
     public Activity? FindByOperationName(string operationName)
     {
         ArgumentNullException.ThrowIfNull(operationName);
-        return _captured.FirstOrDefault(
-            span => string.Equals(span.OperationName, operationName, StringComparison.Ordinal));
+        return FindIn(_captured, operationName);
     }
+
+    /// <summary>Selects the first of <paramref name="spans"/> whose operation name equals
+    /// <paramref name="operationName"/> (ordinal). A caller that holds one snapshot of the capture uses this to
+    /// decide and to describe a failure from that same snapshot.</summary>
+    /// <param name="spans">The spans to search.</param>
+    /// <param name="operationName">The operation name to look for.</param>
+    /// <returns>The first matching span, or <see langword="null"/>.</returns>
+    internal static Activity? FindIn(IEnumerable<Activity> spans, string operationName)
+        => spans.FirstOrDefault(
+            span => string.Equals(span.OperationName, operationName, StringComparison.Ordinal));
+
+    /// <summary>Selects the first of <paramref name="spans"/> whose operation name equals
+    /// <paramref name="operationName"/> and whose tag <paramref name="tagKey"/> matches
+    /// <paramref name="tagValue"/> (see <see cref="FindByOperationNameAndTag"/>).</summary>
+    /// <param name="spans">The spans to search.</param>
+    /// <param name="operationName">The operation name to look for.</param>
+    /// <param name="tagKey">The tag key to inspect.</param>
+    /// <param name="tagValue">The expected tag value.</param>
+    /// <returns>The first matching span, or <see langword="null"/>.</returns>
+    internal static Activity? FindIn(IEnumerable<Activity> spans, string operationName, string tagKey, object tagValue)
+        => spans.FirstOrDefault(
+            span => string.Equals(span.OperationName, operationName, StringComparison.Ordinal)
+                && TagValueEquals(span.GetTagItem(tagKey), tagValue));
 
     /// <summary>Returns the first captured span whose <see cref="Activity.OperationName"/> equals
     /// <paramref name="operationName"/> and that carries a tag <paramref name="tagKey"/> whose value
@@ -158,9 +180,7 @@ public sealed class SpanCapture : IDisposable
         ArgumentNullException.ThrowIfNull(operationName);
         ArgumentNullException.ThrowIfNull(tagKey);
         ArgumentNullException.ThrowIfNull(tagValue);
-        return _captured.FirstOrDefault(
-            span => string.Equals(span.OperationName, operationName, StringComparison.Ordinal)
-                && TagValueEquals(span.GetTagItem(tagKey), tagValue));
+        return FindIn(_captured, operationName, tagKey, tagValue);
     }
 
     /// <summary>Returns the captured spans that are direct children of <paramref name="parent"/>, found by the
