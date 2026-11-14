@@ -73,6 +73,55 @@ internal sealed class SpanUnstartedAndParentIdTests
     }
 
     [Test]
+    public async Task IsChildOf_AChildConfiguredWithItsParentButNotStarted_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var noCurrent = new NoCurrentActivity();
+        using var hierarchicalParent = new Activity("parent");
+        hierarchicalParent.SetIdFormat(ActivityIdFormat.Hierarchical);
+        hierarchicalParent.Start();
+        using var hierarchicalChild = new Activity("child");
+        hierarchicalChild.SetIdFormat(ActivityIdFormat.Hierarchical);
+        hierarchicalChild.SetParentId(hierarchicalParent.Id!);
+        using var w3cParent = StartedRoot();
+        using var w3cChild = new Activity("child");
+        w3cChild.SetParentId(w3cParent.TraceId, w3cParent.SpanId);
+
+        // SetParentId fills in the parent (and the trace) before Start, but a span that has not started is nobody's child.
+        await Assert.That(hierarchicalChild.ParentId).IsEqualTo(hierarchicalParent.Id);
+        await Assert.That(w3cChild.ParentSpanId == w3cParent.SpanId && w3cChild.TraceId == w3cParent.TraceId).IsTrue();
+        await Assert.That(async () => await Assert.That(hierarchicalChild).IsChildOf(hierarchicalParent)).Throws<AssertionException>();
+        await Assert.That(async () => await Assert.That(w3cChild).IsChildOf(w3cParent)).Throws<AssertionException>();
+    }
+
+    [Test]
+    public async Task SharesTraceWith_SpansConfiguredWithOneTraceButNotStarted_Fail(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var noCurrent = new NoCurrentActivity();
+        using var hierarchicalFirst = new Activity("first");
+        using var hierarchicalSecond = new Activity("second");
+        using var w3cFirst = new Activity("first");
+        using var w3cSecond = new Activity("second");
+        foreach (var span in new[] { hierarchicalFirst, hierarchicalSecond })
+        {
+            span.SetIdFormat(ActivityIdFormat.Hierarchical);
+            span.SetParentId("|r.1.");
+        }
+
+        var traceId = ActivityTraceId.CreateRandom();
+        w3cFirst.SetParentId(traceId, ActivitySpanId.CreateRandom());
+        w3cSecond.SetParentId(traceId, ActivitySpanId.CreateRandom());
+
+        // The root id and the trace id come from the parent id before Start, but unstarted spans share no trace.
+        await Assert.That(hierarchicalFirst.RootId).IsEqualTo("r");
+        await Assert.That(hierarchicalSecond.RootId).IsEqualTo("r");
+        await Assert.That(w3cFirst.TraceId == w3cSecond.TraceId && w3cFirst.TraceId != default).IsTrue();
+        await Assert.That(async () => await Assert.That(hierarchicalFirst).SharesTraceWith(hierarchicalSecond)).Throws<AssertionException>();
+        await Assert.That(async () => await Assert.That(w3cFirst).SharesTraceWith(w3cSecond)).Throws<AssertionException>();
+    }
+
+    [Test]
     public async Task IsRoot_ASpanThatHasNotStarted_Passes(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

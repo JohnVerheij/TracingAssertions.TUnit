@@ -253,6 +253,28 @@ internal sealed class SpanTreeRendererTests
     }
 
     [Test]
+    public async Task Render_LineBreaksAndLiteralBackslashes_StayDistinct(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Render.Escape");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Render.Escape");
+        using (var span = Start(source, "a" + (char)10 + "b", 0))
+        {
+            span.SetTag("v", "x" + (char)13 + "y");
+        }
+
+        using (var span = Start(source, @"a\nb", 1))
+        {
+            span.SetTag("v", @"x\ry");
+        }
+
+        // A line break is written as \n or \r and a backslash as \\, so a name or a value that holds a real line
+        // break renders differently from one that holds a backslash and a letter.
+        await Assert.That(SpanTreeRenderer.Render(capture, new SpanTreeOptions { TagKeys = ["v"] })).IsEqualTo(
+            @"a\nb [Internal, Unset] {v=x\ry}" + (char)10 + @"a\\nb [Internal, Unset] {v=x\\ry}");
+    }
+
+    [Test]
     public async Task Render_SpanWhoseParentWasNotCaptured_IsShownAtTopLevel(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

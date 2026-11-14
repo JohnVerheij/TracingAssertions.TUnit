@@ -297,7 +297,8 @@ await Assert.That(tree).IsEqualTo(
 
 A span whose parent was not captured (a remote parent, a span still running) appears at the top level. A
 capture without spans renders as `<no spans>`. Line breaks inside a name or a value are written as `\n` and
-`\r`, so one span stays on one line. To keep the tree in a snapshot file, pass it to
+`\r`, and a backslash as `\\`, so one span stays on one line and a real line break never looks like a backslash
+followed by `n`. To keep the tree in a snapshot file, pass it to
 `MatchesSnapshot()` from [`SnapshotAssertions.TUnit`](https://www.nuget.org/packages/SnapshotAssertions.TUnit/).
 
 ## Durations

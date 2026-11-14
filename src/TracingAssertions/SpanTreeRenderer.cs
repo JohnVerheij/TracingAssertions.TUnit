@@ -155,14 +155,17 @@ public static class SpanTreeRenderer
             : string.Concat("w", span.TraceId.ToHexString(), span.ParentSpanId.ToHexString());
     }
 
-    /// <summary>Writes a line break inside a name or a value as <c>\r</c> or <c>\n</c> text, so one span is always one
-    /// line and a name can never forge another span line.</summary>
+    /// <summary>Writes a backslash inside a name or a value as <c>\\</c> and a line break as <c>\r</c> or <c>\n</c>
+    /// text, so one span is always one line, a name can never forge another span line, and a real line break never
+    /// reads like a backslash followed by <c>n</c> or <c>r</c>.</summary>
     /// <param name="text">The name or value.</param>
-    /// <returns>The text with line breaks escaped.</returns>
+    /// <returns>The text with backslashes and line breaks escaped.</returns>
     internal static string Escape(string text)
-        => text.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);
+        => text.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
 
-    /// <summary>The invariant text of a tag value, with line breaks escaped. Numbers and dates never take the
+    /// <summary>The invariant text of a tag value, with backslashes and line breaks escaped. Numbers and dates never take the
     /// culture of the machine.</summary>
     /// <param name="value">The value.</param>
     /// <returns>The escaped text.</returns>
