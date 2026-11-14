@@ -17,7 +17,7 @@
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0003</DiagnosticId>
-    <Target>TracingAssertions, Version=0.2.0.0, Culture=neutral, PublicKeyToken=null</Target>
+    <Target>TracingAssertions, Version=0.2.1.0, Culture=neutral, PublicKeyToken=null</Target>
     <Left>lib/net10.0/TracingAssertions.dll</Left>
     <Right>lib/net10.0/TracingAssertions.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

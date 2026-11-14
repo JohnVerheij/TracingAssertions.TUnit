@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15: span tag, child span and duration assertions, span tree renderer, .NET 11
+
 ### Added
 
 - **`Assert.That(capture).HasSpanWithTag(operationName, tagKey, tagValue)`** asserts that the capture holds a span with that operation name and tag value, and awaiting it returns the span, so a test goes on with a span that is not `null` instead of looking it up and checking for `null`. The tag value is compared by its invariant `ToString` form, as in `HasTagValue`. When no span matches, the failure shows every captured span with the tag.
@@ -138,7 +140,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
