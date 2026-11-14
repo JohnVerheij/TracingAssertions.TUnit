@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.80.0 to 1.85.0: 1.83.0 is the first TUnit with a `net11.0` asset, and 1.85.0 keeps TUnit's OpenTelemetry and ASP.NET Core packages on OpenTelemetry 1.20.x for `net10.0`, so a project with one version for all its TUnit packages gets no .NET 11 packages there.
 - **Failure texts of every span and capture assertion** now follow one rule: TUnit prints the expectation once (`Expected to have status Error`), and the text after `but` describes what was found (`but it was Ok`), with names and values in single quotes; a value the expectation cannot show appears once, in parentheses. Before, each text started with the expectation again, so TUnit printed it twice. A test that matches on the old wording needs updating.
 - **`HasSpan`, `HasNoSpan` and `HasSpanCount`** show the captured spans as a tree when they fail, where `HasSpan` listed operation names and the other two did not list spans.
 - **`IsChildOf`** names the span's actual parent (by operation name when known) and the expected one when it fails, not only span ids.
