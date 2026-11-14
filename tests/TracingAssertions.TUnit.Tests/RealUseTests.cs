@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,8 +21,6 @@ internal sealed class RealUseTests
 
     /// <summary>One source every parallel test below emits on; the capture of each test sees the others' spans.</summary>
     private static readonly ActivitySource Shared = new(SharedSource);
-
-    private static int _retryAttempts;
 
     private static ActivityContext NewRootContext() =>
         new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
@@ -128,19 +126,24 @@ internal sealed class RealUseTests
     // ---- sampling ----
 
     [Test]
-    public async Task SamplingNone_NeverForcesASpanIntoExistence(CancellationToken cancellationToken)
+    public async Task SamplingNone_CreatesNoSpanOfItsOwn(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        using var control = new ActivitySource("TracingAssertions.TUnit.Tests.RealUse.SamplingNoneControl");
         using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RealUse.SamplingNone");
         using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RealUse.SamplingNone", ActivitySamplingResult.None);
 
+        // The control source has no capture: it only shows whether another listener (TUnit's own, while its HTML
+        // report is on) samples spans in this test, and so would create one whatever the capture asks for.
+        var otherListenerSamples = control.StartActivity("op");
+        otherListenerSamples?.Dispose();
         var span = source.StartActivity("op");
         span?.Dispose();
 
-        // Both paths are valid, depending on whether another listener (TUnit's own, while its HTML report is on)
-        // samples the span: with none, no span exists and nothing is captured; with one, the span exists and the
-        // capture sees it. What must never happen is a captured span when none was created.
-        await Assert.That(capture).HasSpanCount(span is null ? 0 : 1);
+        // The capture adds nothing: a span exists only if another listener created it, and then the capture sees
+        // exactly that one span; with no other listener, no span exists and nothing is captured.
+        await Assert.That(span is null).IsEqualTo(otherListenerSamples is null);
+        await Assert.That(capture).HasSpanCount(otherListenerSamples is null ? 0 : 1);
     }
 
     [Test]
@@ -209,7 +212,7 @@ internal sealed class RealUseTests
     public async Task Retry_EachAttemptStartsWithAFreshCapture(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var attempt = Interlocked.Increment(ref _retryAttempts);
+        var attempt = TestContext.Current!.Execution.CurrentRetryAttempt;
         using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RealUse.Retry");
         using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RealUse.Retry");
         using (source.StartActivity("attempt"))
@@ -219,17 +222,19 @@ internal sealed class RealUseTests
 
         // The first attempt's span is gone with its capture: every attempt sees exactly its own span.
         await Assert.That(capture).HasSpanCount(1);
-        if (attempt == 1)
+        if (attempt == 0)
         {
             throw new InvalidOperationException("first attempt fails on purpose, to force a retry");
         }
 
-        await Assert.That(attempt).IsEqualTo(2);
+        await Assert.That(attempt).IsEqualTo(1);
     }
 
     // ---- large captures ----
 
+    // The allocation counter below is process-wide, so no other test may allocate while it is read: this one runs alone.
     [Test]
+    [NotInParallel]
     public async Task LargeCapture_CountAssertionsDoNotCopyTheCapture(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -246,17 +251,95 @@ internal sealed class RealUseTests
         // Warm up, so one-time allocations of the first call do not count.
         await Assert.That(capture).HasSpanCount(20_000);
 
-        var before = GC.GetAllocatedBytesForCurrentThread();
+        // An awaited assertion can resume on another thread, so a per-thread counter would compare two threads: the
+        // process-wide one is read instead (precise, so it includes the allocations of every thread).
+        var before = GC.GetTotalAllocatedBytes(precise: true);
         for (var i = 0; i < 200; i++)
         {
             await Assert.That(capture).HasSpanCount(20_000);
         }
 
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        var allocated = GC.GetTotalAllocatedBytes(precise: true) - before;
 
         // 200 count assertions over 20,000 spans must not copy the capture each time: a copy is 160,000 bytes, so
-        // 200 copies are 32 MB, where the assertions themselves need a few KB each.
-        await Assert.That(allocated).IsLessThan(8_000_000);
+        // 200 copies are 32 MB (measured: 32.2 MB), where the assertions themselves need well under 1 KB each
+        // (measured: 0.14 MB for all 200). The bound sits between the two, with a margin of 28 and 8.
+        await Assert.That(allocated).IsLessThan(4_000_000);
+    }
+
+    // ---- failure texts while spans are still being captured ----
+
+    [Test]
+    public async Task HasSpanCount_FailureTextDuringACapture_CountsTheSpansItListsAndNoOthers(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RealUse.FailureCount");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RealUse.FailureCount");
+        var producer = Task.Run(() =>
+        {
+            for (var i = 0; i < 20_000; i++)
+            {
+                using (source.StartActivity("burst", ActivityKind.Internal, default(ActivityContext)))
+                {
+                    // The span stops, and is captured, when the scope closes.
+                }
+            }
+        }, cancellationToken);
+
+        // The assertion is called directly: the loop must be fast enough to run while the producer is still adding.
+        var mismatches = 0;
+        do
+        {
+            var message = SpanCaptureAssertions.HasSpanCount(capture, int.MaxValue).Message.ReplaceLineEndings("\n");
+            var lines = message.Split('\n');
+            var counted = int.Parse(
+                message["it contained ".Length..message.IndexOf(';', StringComparison.Ordinal)], CultureInfo.InvariantCulture);
+            var listed = message.Contains("captured spans:", StringComparison.Ordinal) ? lines.Length - 1 : 0;
+            mismatches += counted == listed ? 0 : 1;
+        }
+        while (!producer.IsCompleted);
+
+        await producer;
+
+        // Whatever the producer added meanwhile, the count in the text is the number of spans the tree lists.
+        await Assert.That(mismatches).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task HasChildSpanCount_FailureTextDuringACapture_ListsTheChildrenOfTheSameSnapshotAsTheTree(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.RealUse.FailureChildren");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.RealUse.FailureChildren");
+        using var parent = source.StartActivity("parent", ActivityKind.Internal, default(ActivityContext))!;
+        var parentContext = parent.Context;
+        var producer = Task.Run(() =>
+        {
+            for (var i = 0; i < 20_000; i++)
+            {
+                using (source.StartActivity("child", ActivityKind.Internal, parentContext))
+                {
+                    // The span stops, and is captured, when the scope closes.
+                }
+            }
+        }, cancellationToken);
+
+        var mismatches = 0;
+        do
+        {
+            var message = SpanAssertions.HasChildSpanCount(parent, capture, int.MaxValue).Message.ReplaceLineEndings("\n");
+            var lines = message.Split('\n');
+            var named = lines[0].Split("'child'", StringSplitOptions.None).Length - 1;
+            var listed = message.Contains("captured spans:", StringComparison.Ordinal) ? lines.Length - 1 : 0;
+
+            // The parent is still running, so it is not captured: every captured span is a child and is a line of the tree.
+            mismatches += named == listed ? 0 : 1;
+        }
+        while (!producer.IsCompleted);
+
+        await producer;
+
+        await Assert.That(mismatches).IsEqualTo(0);
     }
 
     // ---- odd names and values ----

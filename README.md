@@ -280,9 +280,10 @@ A failure lists the children the parent has and the captured spans as a tree.
 ## Rendering the spans as a tree
 
 `SpanTreeRenderer.Render` prints the captured spans as an indented tree: the operation name, then the kind
-and status, then the tags you select. The text holds no ids and no durations and orders siblings by start
-time (then by name), so it is stable between runs (two siblings with the same start time and name may swap) and
-suits a snapshot test. The failures of the capture-level assertions and of `HasChildSpan` and `HasChildSpanCount`
+and status, then the tags you select. The text holds no ids and no durations. Siblings, and the spans at the top
+level, are ordered by start time, then by operation name (ordinal); spans equal in both keep the order in which
+they were captured. The same spans captured in the same order therefore always give the same text, which suits
+a snapshot test. The failures of the capture-level assertions and of `HasChildSpan` and `HasChildSpanCount`
 print the captured spans as this tree (`HasSpanWithTag` adds the tag it looked for).
 
 ```csharp
@@ -324,11 +325,11 @@ Span assertions on `Assert.That(span)` where `span` is a `System.Diagnostics.Act
 | `HasTagValue(key, value)` | The span's tag `key` matches `value` (compared by invariant `ToString`). |
 | `HasStatus(status)` | The span's `Status` equals the given `ActivityStatusCode`. |
 | `HasKind(kind)` *(v0.2.0+)* | The span's `Kind` equals the given `ActivityKind` (for example `Server` for an inbound request, `Client` for an outbound call). |
-| `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). With hierarchical activity IDs the `ParentId` is compared with the parent's `Id`; a hierarchical span is never the child of a W3C span. The failure names the span's actual parent. |
-| `IsRoot()` *(v0.2.0+)* | The span has no parent (its `ParentSpanId` is the default span id, or its `ParentId` is `null` with hierarchical IDs). Inside a TUnit test, the code's spans usually have the test runner's activity as parent: see [Root spans and the test runner](#root-spans-and-the-test-runner). |
+| `IsChildOf(parent)` | The span is a direct child of `parent` (same trace, `ParentSpanId` equals the parent's `SpanId`). With hierarchical activity IDs the `ParentId` is compared with the parent's `Id`; a hierarchical span is never the child of a W3C span. A span that has not started has no IDs yet and is nobody's child. The failure names the span's actual parent. |
+| `IsRoot()` *(v0.2.0+)* | The span has no parent: its `ParentId` is `null` (with W3C IDs that is the same as a default `ParentSpanId`). A span that has not started has no parent yet, so it is a root. Inside a TUnit test, the code's spans usually have the test runner's activity as parent: see [Root spans and the test runner](#root-spans-and-the-test-runner). |
 | `HasEvent(name)` *(v0.2.0+)* | The span carries an `ActivityEvent` named `name` (lists the span's event names on failure). |
 | `HasExceptionEvent()` *(v0.2.0+)* | The span carries the OpenTelemetry exception event (an `ActivityEvent` named `exception`). |
-| `SharesTraceWith(other)` | The span shares `other`'s `TraceId` (with hierarchical IDs, its `RootId`). |
+| `SharesTraceWith(other)` | The span shares `other`'s `TraceId` (with hierarchical IDs, its `RootId`). A span that has not started has no trace and shares one with no span, not even with another unstarted span. |
 | `HasDurationLessThan(max)` / `HasDurationAtLeast(min)` | The stopped span's `Duration` is below `max` / at least `min` (real clock; see [Durations](#durations)). |
 | `HasChildSpan(capture, name)` | `capture` holds a direct child of the span with that operation name; awaiting it returns the child. |
 | `HasChildSpanCount(capture, count)` | `capture` holds exactly that many direct children of the span. |

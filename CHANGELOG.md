@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Assert.That(capture).HasSpanWithTag(operationName, tagKey, tagValue)`** asserts that the capture holds a span with that operation name and tag value, and awaiting it returns the span, so a test goes on with a span that is not `null` instead of looking it up and checking for `null`. The tag value is compared by its invariant `ToString` form, as in `HasTagValue`. When no span matches, the failure shows every captured span with the tag.
 - **`Assert.That(parent).HasChildSpan(capture, operationName)`** (awaiting it returns the first matching child) and **`HasChildSpanCount(capture, count)`** assert on the direct children of a span.
 - **`Assert.That(span).HasDurationLessThan(max)`** and **`HasDurationAtLeast(min)`** assert on `Activity.Duration`. A span reads the real clock, so bounds need room for a slow machine. A span that has not stopped fails both.
-- **`SpanTreeRenderer.Render(capture, options)`** prints the captured spans as an indented tree: operation name, kind, status and the tags chosen with `SpanTreeOptions.TagKeys`, without ids or durations, siblings in start-time order. The text is stable between runs, so it suits a snapshot test.
+- **`SpanTreeRenderer.Render(capture, options)`** prints the captured spans as an indented tree: operation name, kind, status and the tags chosen with `SpanTreeOptions.TagKeys`, without ids or durations. Siblings are ordered by start time, then operation name, and spans equal in both keep their capture order, so the same capture gives the same text and it suits a snapshot test.
 - **.NET 11:** both packages target `net10.0` and `net11.0`.
 
 ### Changed
@@ -32,7 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`IsChildOf`, `IsRoot`, `SharesTraceWith` and `SpanCapture.ChildrenOf` with `ActivityIdFormat.Hierarchical` ids.** They compared W3C ids only, which are all default with hierarchical ids, so unrelated spans passed and every span was a root. They now compare `ParentId`, `Id` and `RootId` for hierarchical spans. A hierarchical span is never related to a W3C span. Results for W3C ids are unchanged.
+- **`IsChildOf`, `IsRoot`, `SharesTraceWith` and `SpanCapture.ChildrenOf` with `ActivityIdFormat.Hierarchical` ids.** They compared W3C ids only, which are all default with hierarchical ids, so unrelated spans passed and every span was a root. They now compare `ParentId`, `Id` and `RootId` for hierarchical spans. A hierarchical span is never related to a W3C span.
+- **`IsChildOf` and `SharesTraceWith` with spans that have not started.** An unstarted span has no ids yet, so every id is default, and two such spans passed both assertions because default equals default. An unstarted span is now nobody's child and shares a trace with no span. `IsRoot` still passes for it, as it has no parent yet.
+- **`IsRoot` with a W3C span whose parent id is not a W3C id** (for example a hierarchical id given to `Activity.SetParentId(string)`). Its parent span id stays default, so it passed as a root although it has a parent. It now fails, and the failure shows the parent id.
 
 ## [0.2.1] - 2026-11-05: worked example, parallel-test guidance
 

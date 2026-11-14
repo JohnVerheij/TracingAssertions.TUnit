@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using TracingAssertions;
 using TUnit.Assertions.Attributes;
 using TUnit.Assertions.Core;
 
@@ -109,10 +108,14 @@ public static class SpanCaptureAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentOutOfRangeException.ThrowIfNegative(expected);
 
-        var actual = capture.CapturedCount;
-        return actual == expected
-            ? AssertionResult.Passed
-            : AssertionResult.Failed(string.Concat(
-                "it contained ", actual.ToString(CultureInfo.InvariantCulture), "; ", SpanTreeRenderer.Describe(capture)));
+        if (capture.CapturedCount == expected)
+        {
+            return AssertionResult.Passed;
+        }
+
+        // One snapshot for the whole message, so a span captured meanwhile cannot make the count and the tree disagree.
+        var spans = capture.Captured;
+        return AssertionResult.Failed(string.Concat(
+            "it contained ", spans.Count.ToString(CultureInfo.InvariantCulture), "; ", SpanTreeRenderer.Describe(spans)));
     }
 }

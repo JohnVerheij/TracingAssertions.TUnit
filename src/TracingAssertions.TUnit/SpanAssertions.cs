@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using TUnit.Assertions.Attributes;
 using TUnit.Assertions.Core;
@@ -118,7 +117,7 @@ public static class SpanAssertions
     /// <paramref name="parent"/>'s <see cref="Activity.SpanId"/> and the trace ids must match. With
     /// <see cref="ActivityIdFormat.Hierarchical"/> ids the span's <see cref="Activity.ParentId"/> must equal the
     /// parent's <see cref="Activity.Id"/>. A hierarchical span is never the child of a W3C span or the
-    /// reverse.</remarks>
+    /// reverse. A span that has not started has no ids yet and is nobody's child.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="parent">The expected parent span.</param>
     /// <returns>A passing assertion when the parent/trace relationship holds; otherwise a failing
@@ -144,7 +143,8 @@ public static class SpanAssertions
     /// (context propagation across a boundary).</summary>
     /// <remarks>With W3C activity ids (the .NET default) the <see cref="Activity.TraceId"/> values must be equal;
     /// with <see cref="ActivityIdFormat.Hierarchical"/> ids the <see cref="Activity.RootId"/> values must be
-    /// equal. A hierarchical span never shares a trace with a W3C span.</remarks>
+    /// equal. A hierarchical span never shares a trace with a W3C span. A span that has not started has no ids yet
+    /// and shares a trace with no span, not even with another one that has not started.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="other">The span expected to be in the same trace.</param>
     /// <returns>A passing assertion when the traces match; otherwise a failing assertion naming the
@@ -184,9 +184,10 @@ public static class SpanAssertions
 
     /// <summary>Asserts that <paramref name="span"/> is a root span: it has no parent. A span created under a
     /// propagated remote parent carries that parent's span id and is not a root.</summary>
-    /// <remarks>With W3C activity ids (the .NET default) the span's <see cref="Activity.ParentSpanId"/> must be the
-    /// default (all-zero) span id; with <see cref="ActivityIdFormat.Hierarchical"/> ids its
-    /// <see cref="Activity.ParentId"/> must be <see langword="null"/>.</remarks>
+    /// <remarks>The span's <see cref="Activity.ParentId"/> must be <see langword="null"/>: with W3C activity ids (the
+    /// .NET default) that is the same as a default (all-zero) <see cref="Activity.ParentSpanId"/>, and a span with
+    /// a parent id that is not a W3C id has a parent although its parent span id is default. A span that has not
+    /// started has no parent yet, so it is a root.</remarks>
     /// <param name="span">The captured span.</param>
     /// <returns>A passing assertion when the span is a root; otherwise a failing assertion naming the
     /// observed parent.</returns>
@@ -310,13 +311,15 @@ public static class SpanAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(operationName);
 
-        var children = capture.ChildrenOf(parent);
+        // One snapshot: the children and the tree in a failure come from the same spans.
+        var spans = capture.Captured;
+        var children = SpanCapture.ChildrenIn(spans, parent);
         var match = children.FirstOrDefault(
             child => string.Equals(child.OperationName, operationName, StringComparison.Ordinal));
         return match is not null
             ? AssertionResult<Activity>.Passed(match)
             : AssertionResult.Failed(string.Concat(
-                "it had ", SpanDescriptions.Children(children), "; ", SpanTreeRenderer.Describe(capture)));
+                "it had ", SpanDescriptions.Children(children), "; ", SpanTreeRenderer.Describe(spans)));
     }
 
     /// <summary>Asserts that <paramref name="capture"/> holds exactly <paramref name="expected"/> direct children
@@ -338,11 +341,13 @@ public static class SpanAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentOutOfRangeException.ThrowIfNegative(expected);
 
-        var children = capture.ChildrenOf(parent);
+        // One snapshot: the children and the tree in a failure come from the same spans.
+        var spans = capture.Captured;
+        var children = SpanCapture.ChildrenIn(spans, parent);
         return children.Count == expected
             ? AssertionResult.Passed
             : AssertionResult.Failed(string.Concat(
-                "it had ", SpanDescriptions.Children(children), "; ", SpanTreeRenderer.Describe(capture)));
+                "it had ", SpanDescriptions.Children(children), "; ", SpanTreeRenderer.Describe(spans)));
     }
 
     /// <summary>Renders the event names a span carries for a failure message: <c>no events</c> when

@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace TracingAssertions;
 
 /// <summary>
 /// Renders the spans of a <see cref="SpanCapture"/> as an indented tree, for failure messages and for snapshot
-/// tests. The text is stable between runs: it holds no span ids, trace ids or durations, children follow their
-/// parent in start-time order (ties by operation name), and lines are joined with <c>\n</c>.
+/// tests. The text holds no span ids, trace ids or durations, and lines are joined with <c>\n</c>. Siblings (and
+/// the spans at the top level) are ordered by start time, then by operation name (ordinal), and spans equal in both
+/// keep the order in which they were captured, so the same spans in the same capture order always give the same
+/// text.
 /// </summary>
 /// <remarks>
 /// <para>Each line is the operation name, then <c>[Kind, Status]</c>, then <c>{key=value, ...}</c> for the tags
@@ -21,10 +24,6 @@ namespace TracingAssertions;
 /// </remarks>
 public static class SpanTreeRenderer
 {
-    /// <summary>The sibling order as a delegate created once, so each sort does not go through a cached method
-    /// group.</summary>
-    private static readonly Comparison<Activity> BySiblingOrder = CompareSiblings;
-
     /// <summary>The text for a capture that holds no span; the failure text also compares against it to choose its
     /// wording.</summary>
     internal const string NoSpans = "<no spans>";
@@ -49,8 +48,16 @@ public static class SpanTreeRenderer
     /// <param name="options">The tree options, or <see langword="null"/> for the default.</param>
     /// <returns>Text that starts with <c>captured spans:</c> or <c>no spans were captured</c>.</returns>
     internal static string Describe(SpanCapture capture, SpanTreeOptions? options = null)
+        => Describe(capture.Captured, options);
+
+    /// <summary>Renders a block for a failure message from a snapshot of spans the caller already holds, so the
+    /// count and the tree in one message come from the same snapshot.</summary>
+    /// <param name="spans">The snapshot to describe.</param>
+    /// <param name="options">The tree options, or <see langword="null"/> for the default.</param>
+    /// <returns>Text that starts with <c>captured spans:</c> or <c>no spans were captured</c>.</returns>
+    internal static string Describe(IReadOnlyList<Activity> spans, SpanTreeOptions? options = null)
     {
-        var tree = Render(capture, options);
+        var tree = Render(spans, options);
         return string.Equals(tree, NoSpans, StringComparison.Ordinal)
             ? "no spans were captured"
             : "captured spans:\n  " + tree.Replace("\n", "\n  ", StringComparison.Ordinal);
@@ -71,7 +78,7 @@ public static class SpanTreeRenderer
         var (roots, children) = BuildForest(spans);
         var keys = options?.TagKeys ?? [];
         var sb = new StringBuilder();
-        var stack = new Stack<(Activity Span, int Depth)>();
+        var stack = new Stack<(int Index, int Depth)>();
         for (var i = roots.Count - 1; i >= 0; i--)
         {
             stack.Push((roots[i], 0));
@@ -79,9 +86,9 @@ public static class SpanTreeRenderer
 
         while (stack.Count > 0)
         {
-            var (span, depth) = stack.Pop();
-            AppendLine(sb, span, depth, keys);
-            if (children.TryGetValue(NodeKey(span), out var kids))
+            var (index, depth) = stack.Pop();
+            AppendLine(sb, spans[index], depth, keys);
+            if (children[index] is { } kids)
             {
                 for (var i = kids.Count - 1; i >= 0; i--)
                 {
@@ -94,43 +101,37 @@ public static class SpanTreeRenderer
     }
 
     /// <summary>Splits the spans into the top-level spans and the children of each span; a span whose parent is not
-    /// in the set is a top-level span.</summary>
+    /// in the set is a top-level span. The parent ids of stopped spans cannot form a loop (a span id exists only once
+    /// the span has started, and a parent id set after the start is ignored), so every span is reached from a
+    /// top-level span exactly once.</summary>
     /// <param name="spans">The spans to arrange.</param>
-    /// <returns>The sorted roots and, per node key, the sorted children.</returns>
-    private static (List<Activity> Roots, Dictionary<string, List<Activity>> Children) BuildForest(
-        IReadOnlyList<Activity> spans)
+    /// <returns>The roots and, per span index, the children (<see langword="null"/> for none); both in sibling
+    /// order.</returns>
+    private static (List<int> Roots, List<int>?[] Children) BuildForest(IReadOnlyList<Activity> spans)
     {
-        var known = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var span in spans)
+        var indexByKey = new Dictionary<string, int>(spans.Count, StringComparer.Ordinal);
+        for (var i = 0; i < spans.Count; i++)
         {
-            known.Add(NodeKey(span));
+            indexByKey.TryAdd(NodeKey(spans[i]), i);
         }
 
-        var roots = new List<Activity>();
-        var children = new Dictionary<string, List<Activity>>(StringComparer.Ordinal);
-        foreach (var span in spans)
-        {
-            var parentKey = ParentKey(span);
-            if (parentKey is not null && known.Contains(parentKey))
-            {
-                if (!children.TryGetValue(parentKey, out var list))
-                {
-                    list = [];
-                    children[parentKey] = list;
-                }
+        // OrderBy is stable: spans equal in start time and name keep the order they have in the capture.
+        var order = Enumerable.Range(0, spans.Count)
+            .OrderBy(i => spans[i].StartTimeUtc)
+            .ThenBy(i => spans[i].OperationName, StringComparer.Ordinal);
 
-                list.Add(span);
+        var roots = new List<int>();
+        var children = new List<int>?[spans.Count];
+        foreach (var i in order)
+        {
+            if (ParentKey(spans[i]) is { } parentKey && indexByKey.TryGetValue(parentKey, out var parent))
+            {
+                (children[parent] ??= []).Add(i);
             }
             else
             {
-                roots.Add(span);
+                roots.Add(i);
             }
-        }
-
-        roots.Sort(BySiblingOrder);
-        foreach (var list in children.Values)
-        {
-            list.Sort(BySiblingOrder);
         }
 
         return (roots, children);
@@ -159,19 +160,6 @@ public static class SpanTreeRenderer
         return SpanRelations.IsHierarchical(span)
             ? "h" + span.ParentId
             : string.Concat("w", span.TraceId.ToHexString(), span.ParentSpanId.ToHexString());
-    }
-
-    /// <summary>Orders siblings by start time, then by operation name (ordinal). The sort is stable only through
-    /// these two keys; two spans equal in both keep an unspecified relative order.</summary>
-    /// <param name="left">The first span.</param>
-    /// <param name="right">The second span.</param>
-    /// <returns>The comparison result.</returns>
-    private static int CompareSiblings(Activity left, Activity right)
-    {
-        var byStart = left.StartTimeUtc.CompareTo(right.StartTimeUtc);
-        return byStart is not 0
-            ? byStart
-            : string.CompareOrdinal(left.OperationName, right.OperationName);
     }
 
     /// <summary>Writes a line break inside a name or a value as <c>\r</c> or <c>\n</c> text, so one span is always one

@@ -106,6 +106,78 @@ internal sealed class SpanTreeRendererTests
     }
 
     [Test]
+    public async Task Render_SiblingsTiedInStartTimeAndName_KeepTheOrderTheyWereCaptured(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.Tests.Render.TiedSiblings");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Render.TiedSiblings");
+        const int count = 64;
+
+        using (Start(source, "root", 0))
+        {
+            for (var i = 0; i < count; i++)
+            {
+                using var child = Start(source, "same", 1);
+                child.SetTag("i", i);
+            }
+        }
+
+        var expected = new List<string> { "root [Internal, Unset]" };
+        for (var i = 0; i < count; i++)
+        {
+            expected.Add("  same [Internal, Unset] {i=" + i.ToString(CultureInfo.InvariantCulture) + "}");
+        }
+
+        // More siblings than an unstable sort keeps in place: equal spans must stay in capture (completion) order.
+        await Assert.That(SpanTreeRenderer.Render(capture, new SpanTreeOptions { TagKeys = ["i"] }))
+            .IsEqualTo(string.Join('\n', expected));
+    }
+
+    [Test]
+    public async Task Render_TiedRoots_KeepTheOrderTheyWereCaptured(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var noCurrent = new NoCurrentActivity();
+        using var source = new ActivitySource("TracingAssertions.Tests.Render.TiedRoots");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Render.TiedRoots");
+        const int count = 64;
+
+        for (var i = 0; i < count; i++)
+        {
+            using var root = Start(source, "same", 1);
+            root.SetTag("i", i);
+        }
+
+        var expected = new List<string>();
+        for (var i = 0; i < count; i++)
+        {
+            expected.Add("same [Internal, Unset] {i=" + i.ToString(CultureInfo.InvariantCulture) + "}");
+        }
+
+        await Assert.That(SpanTreeRenderer.Render(capture, new SpanTreeOptions { TagKeys = ["i"] }))
+            .IsEqualTo(string.Join('\n', expected));
+    }
+
+    [Test]
+    public async Task Render_W3CSpanWithANonW3CParentId_IsShownAtTopLevel(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var noCurrent = new NoCurrentActivity();
+        using var source = new ActivitySource("TracingAssertions.Tests.Render.NonW3CParentId");
+        using var capture = SpanCapture.ForSource("TracingAssertions.Tests.Render.NonW3CParentId");
+
+        var span = source.CreateActivity("odd", ActivityKind.Internal)!;
+        span.SetIdFormat(ActivityIdFormat.W3C);
+        span.SetParentId("|abc.1.");
+        using (span.Start())
+        {
+            await Assert.That(span.ParentSpanId == default).IsTrue();
+        }
+
+        await Assert.That(SpanTreeRenderer.Render(capture)).IsEqualTo("odd [Internal, Unset]");
+    }
+
+    [Test]
     public async Task Render_Roots_AreOrderedByStartTime(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

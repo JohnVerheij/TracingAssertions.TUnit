@@ -176,8 +176,17 @@ public sealed class SpanCapture : IDisposable
     public IReadOnlyList<Activity> ChildrenOf(Activity parent)
     {
         ArgumentNullException.ThrowIfNull(parent);
-        return _captured.Where(span => SpanRelations.IsChildOf(span, parent)).ToArray();
+        return ChildrenIn(_captured, parent);
     }
+
+    /// <summary>Selects the direct children of <paramref name="parent"/> among <paramref name="spans"/>, by the
+    /// relationship rules of <see cref="ChildrenOf(Activity)"/>. A caller that holds one snapshot of the capture
+    /// uses this to derive the children and the rest of a message from that same snapshot.</summary>
+    /// <param name="spans">The spans to search.</param>
+    /// <param name="parent">The parent span.</param>
+    /// <returns>The direct children in the order of <paramref name="spans"/>.</returns>
+    internal static IReadOnlyList<Activity> ChildrenIn(IEnumerable<Activity> spans, Activity parent)
+        => spans.Where(span => SpanRelations.IsChildOf(span, parent)).ToArray();
 
     /// <summary>Compares a span's tag value (as returned by <see cref="Activity.GetTagItem"/>) against
     /// an expected value by their invariant <see cref="object.ToString"/> form. A

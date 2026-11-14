@@ -43,7 +43,10 @@ internal static class SpanDescriptions
             return "no parent";
         }
 
-        var id = SpanRelations.IsHierarchical(span) ? "id " + span.ParentId : "span " + span.ParentSpanId.ToHexString();
+        // A W3C span whose parent id is not a W3C id has a parent id but no parent span id to show.
+        var id = SpanRelations.IsHierarchical(span) || span.ParentSpanId == default
+            ? "id " + span.ParentId
+            : "span " + span.ParentSpanId.ToHexString();
         return span.Parent is { } parent
             ? string.Concat(Quote(parent.OperationName), " (", id, ")")
             : id;
