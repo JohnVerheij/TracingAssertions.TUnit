@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,7 +71,25 @@ internal sealed class SmokeTest
 
         OrderService.Place(orderId: 7);
 
-        var place = capture.FindByOperationNameAndTag("order.place", "order.id", 7)!;
+        var place = await Assert.That(capture).HasSpanWithTag("order.place", "order.id", 7);
         await Assert.That(place).IsRoot();
+    }
+
+    [Test]
+    public async Task ChildSpanDurationAndTreeAssertionsWorkFromThePackedPackage(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var capture = SpanCapture.ForSource(OrderService.SourceName);
+        Activity.Current = null;
+
+        OrderService.Place(orderId: 9);
+
+        var place = await Assert.That(capture).HasSpanWithTag("order.place", "order.id", 9);
+        var persist = await Assert.That(place).HasChildSpan(capture, "order.persist");
+        await Assert.That(place).HasChildSpanCount(capture, 1);
+        await Assert.That(persist).HasDurationLessThan(TimeSpan.FromMinutes(1));
+        // The whole capture also holds the spans of the other smoke tests, which share the source and run in
+        // parallel, so the tree is only checked for containing the child line.
+        await Assert.That(SpanTreeRenderer.Render(capture)).Contains("  order.persist [Client, Unset]");
     }
 }

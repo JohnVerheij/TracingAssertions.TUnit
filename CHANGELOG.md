@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15: span tag, child span and duration assertions, span tree renderer, .NET 11
+
+### Added
+
+- **`Assert.That(capture).HasSpanWithTag(operationName, tagKey, tagValue)`** asserts that the capture holds a span with that operation name and tag value, and awaiting it returns the span, so a test goes on with a span that is not `null` instead of looking it up and checking for `null`. The tag value is compared by its invariant `ToString` form, as in `HasTagValue`. When no span matches, the failure shows every captured span with the tag.
+- **`Assert.That(parent).HasChildSpan(capture, operationName)`** (awaiting it returns the first matching child) and **`HasChildSpanCount(capture, count)`** assert on the direct children of a span.
+- **`Assert.That(span).HasDurationLessThan(max)`** and **`HasDurationAtLeast(min)`** assert on `Activity.Duration`. A span reads the real clock, so bounds need room for a slow machine. A span that has not stopped fails both.
+- **`SpanTreeRenderer.Render(capture, options)`** prints the captured spans as an indented tree: operation name, kind, status and the tags chosen with `SpanTreeOptions.TagKeys`, without ids or durations. Siblings are ordered by start time, then operation name, and spans equal in both keep their capture order, so the same capture gives the same text and it suits a snapshot test. Line breaks in names and values are written as `\n` and `\r` and a backslash as `\\`, so one span is one line and a real line break never reads like a backslash followed by `n`.
+- **.NET 11:** both packages target `net10.0` and `net11.0`.
+
+### Changed
+
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.80.0 to 1.85.0: 1.83.0 is the first TUnit with a `net11.0` asset, and 1.85.0 keeps TUnit's OpenTelemetry and ASP.NET Core packages on OpenTelemetry 1.20.x for `net10.0`, so a project with one version for all its TUnit packages gets no .NET 11 packages there.
+- **Failure texts of every span and capture assertion** now follow one rule: TUnit prints the expectation once (`Expected to have status Error`), and the text after `but` describes what was found (`but it was Ok`), with names and values in single quotes; a value the expectation cannot show appears once, in parentheses. Before, each text started with the expectation again, so TUnit printed it twice. A test that matches on the old wording needs updating.
+- **`HasSpan`, `HasNoSpan` and `HasSpanCount`** show the captured spans as a tree when they fail, where `HasSpan` listed operation names and the other two did not list spans.
+- **`IsChildOf`** names the span's actual parent (by operation name when known) and the expected one when it fails, not only span ids.
+
+### Fixed
+
+- **`IsChildOf`, `IsRoot`, `SharesTraceWith` and `SpanCapture.ChildrenOf` with `ActivityIdFormat.Hierarchical` ids.** They compared W3C ids only, which are all default with hierarchical ids, so unrelated spans passed and every span was a root. They now compare `ParentId`, `Id` and `RootId` for hierarchical spans. A hierarchical span is never related to a W3C span.
+- **`IsChildOf` and `SharesTraceWith` with spans that have not started.** An unstarted span has no id of its own yet. Its other ids are default, so two such spans passed both assertions because default equals default, or `Activity.SetParentId` has already filled in its parent, root and trace ids, so a child configured with its parent passed `IsChildOf` and two spans configured with one trace passed `SharesTraceWith`. A span that has not started is now nobody's child and shares a trace with no span. `IsRoot` still passes for an unstarted span without a parent id.
+- **`IsRoot` with a W3C span whose parent id is not a W3C id** (for example a hierarchical id given to `Activity.SetParentId(string)`). Its parent span id stays default, so it passed as a root although it has a parent. It now fails, and the failure shows the parent id.
+- **Line breaks in activity ids in the failure of `IsChildOf`, `IsRoot` and `SharesTraceWith`.** A parent id, a hierarchical id or a root id is a string the caller supplies (for example through `Activity.SetParentId(string)`) and can hold a line break, which started a new line in the failure. Line breaks in an id are now written as `\n` and `\r`, and a backslash as `\\`, as in names and tag values.
+- **`HasSpanWithTag` failure when the capture grows during the lookup.** The lookup searched one view of the capture and the failure tree showed a later one, so the text could say that no span matched and then list a span that does. The search and the tree now use the same view. `HasSpan`, `HasNoSpan` and `HasSpanCount` do the same; `HasSpanCount` could decide on a count from before a span completed and then list the span in its failure.
+- **`SpanTreeOptions.TagKeys`** kept the list it was given, so adding a `null` key to that list after the assignment passed the check and failed the render. The options now keep a copy.
+
 ## [0.2.1] - 2026-11-05: worked example, parallel-test guidance
 
 Patch release. No API or behavior change.
@@ -113,7 +139,8 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.1...v0.1.2
