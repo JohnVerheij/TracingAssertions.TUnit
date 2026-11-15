@@ -11,11 +11,13 @@ namespace TracingAssertions;
 /// <see cref="Activity.Id"/>, <see cref="Activity.ParentId"/> and <see cref="Activity.RootId"/>. A hierarchical
 /// span is never related to a W3C span.
 /// </summary>
-/// <remarks>A span that has not started has no ids yet (its id format is unknown, so it is treated as W3C, and its
-/// trace id and span id are default). It is never the child of another span and shares no trace with any span, not
-/// even with another unstarted one: default equals default, which is not a relationship. It is a root, as it has no
-/// parent yet. The spans of a <see cref="SpanCapture"/> have all stopped, so this only concerns a span a test
-/// creates itself.</remarks>
+/// <remarks>A span that has not started has no id of its own yet (<see cref="Activity.Start"/> generates it), and its
+/// id format is unknown unless <see cref="Activity.SetIdFormat"/> set it; an unknown format is treated as W3C. Its
+/// other ids are default unless <see cref="Activity.SetParentId(string)"/> has filled in its parent id, root id and
+/// trace id. It is never the child of another span and shares no trace with any span, not even with another unstarted
+/// one (default equals default, which is not a relationship). It is a root unless <c>SetParentId</c> gave it a parent.
+/// The spans of a <see cref="SpanCapture"/> have all stopped, so this only concerns a span a test creates
+/// itself.</remarks>
 internal static class SpanRelations
 {
     /// <summary>Whether <paramref name="span"/> uses hierarchical activity ids, the format in which the W3C trace
@@ -72,6 +74,7 @@ internal static class SpanRelations
     /// and a parent id that is not a W3C id (for example a hierarchical one given to
     /// <see cref="Activity.SetParentId(string)"/>) has a parent although its parent span id is default.</summary>
     /// <param name="span">The span to inspect.</param>
-    /// <returns><see langword="true"/> when the span has no parent. A span that has not started has none yet.</returns>
+    /// <returns><see langword="true"/> when the span has no parent. A span that has not started has none unless
+    /// <see cref="Activity.SetParentId(string)"/> gave it one.</returns>
     internal static bool IsRoot(Activity span) => span.ParentId is null;
 }

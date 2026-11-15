@@ -144,6 +144,23 @@ internal sealed class SpanUnstartedAndParentIdTests
         await Assert.That(hierarchical).IsRoot();
     }
 
+    [Test]
+    public async Task IsRoot_AnUnstartedSpanGivenAParentId_Fails(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var w3c = new Activity("w3c");
+        w3c.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom());
+        using var hierarchical = new Activity("hierarchical");
+        hierarchical.SetIdFormat(ActivityIdFormat.Hierarchical);
+        hierarchical.SetParentId("|r.1.");
+
+        // SetParentId gives a span its parent before Start, so it is no root although it has not started.
+        await Assert.That(w3c.Id).IsNull();
+        await Assert.That(hierarchical.Id).IsNull();
+        await Assert.That(async () => await Assert.That(w3c).IsRoot()).Throws<AssertionException>();
+        await Assert.That(async () => await Assert.That(hierarchical).IsRoot()).Throws<AssertionException>();
+    }
+
     // ---- a W3C span with a parent id that is not a W3C id ----
 
     [Test]

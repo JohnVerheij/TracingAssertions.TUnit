@@ -117,7 +117,8 @@ public static class SpanAssertions
     /// <paramref name="parent"/>'s <see cref="Activity.SpanId"/> and the trace ids must match. With
     /// <see cref="ActivityIdFormat.Hierarchical"/> ids the span's <see cref="Activity.ParentId"/> must equal the
     /// parent's <see cref="Activity.Id"/>. A hierarchical span is never the child of a W3C span or the
-    /// reverse. A span that has not started has no ids yet and is nobody's child.</remarks>
+    /// reverse. A span that has not started is nobody's child, also when <see cref="Activity.SetParentId(string)"/>
+    /// has filled in its parent id.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="parent">The expected parent span.</param>
     /// <returns>A passing assertion when the parent/trace relationship holds; otherwise a failing
@@ -143,8 +144,9 @@ public static class SpanAssertions
     /// (context propagation across a boundary).</summary>
     /// <remarks>With W3C activity ids (the .NET default) the <see cref="Activity.TraceId"/> values must be equal;
     /// with <see cref="ActivityIdFormat.Hierarchical"/> ids the <see cref="Activity.RootId"/> values must be
-    /// equal. A hierarchical span never shares a trace with a W3C span. A span that has not started has no ids yet
-    /// and shares a trace with no span, not even with another one that has not started.</remarks>
+    /// equal. A hierarchical span never shares a trace with a W3C span. A span that has not started shares a trace
+    /// with no span, not even with another one that has not started, also when
+    /// <see cref="Activity.SetParentId(string)"/> has filled in its trace id or root id.</remarks>
     /// <param name="span">The captured span.</param>
     /// <param name="other">The span expected to be in the same trace.</param>
     /// <returns>A passing assertion when the traces match; otherwise a failing assertion naming the
@@ -187,7 +189,7 @@ public static class SpanAssertions
     /// <remarks>The span's <see cref="Activity.ParentId"/> must be <see langword="null"/>: with W3C activity ids (the
     /// .NET default) that is the same as a default (all-zero) <see cref="Activity.ParentSpanId"/>, and a span with
     /// a parent id that is not a W3C id has a parent although its parent span id is default. A span that has not
-    /// started has no parent yet, so it is a root.</remarks>
+    /// started is a root unless <see cref="Activity.SetParentId(string)"/> gave it a parent.</remarks>
     /// <param name="span">The captured span.</param>
     /// <returns>A passing assertion when the span is a root; otherwise a failing assertion naming the
     /// observed parent.</returns>
