@@ -80,14 +80,24 @@ internal sealed class SpanUnstartedAndParentIdTests
         using var hierarchicalParent = new Activity("parent");
         hierarchicalParent.SetIdFormat(ActivityIdFormat.Hierarchical);
         hierarchicalParent.Start();
+
+        // A started span becomes the current one, and a span started after it would become its child (and could take
+        // its id format), so the W3C parent starts with no current span and an explicit format.
+        Activity.Current = null;
+        using var w3cParent = new Activity("parent");
+        w3cParent.SetIdFormat(ActivityIdFormat.W3C);
+        w3cParent.Start();
+        Activity.Current = null;
+
         using var hierarchicalChild = new Activity("child");
         hierarchicalChild.SetIdFormat(ActivityIdFormat.Hierarchical);
         hierarchicalChild.SetParentId(hierarchicalParent.Id!);
-        using var w3cParent = StartedRoot();
         using var w3cChild = new Activity("child");
         w3cChild.SetParentId(w3cParent.TraceId, w3cParent.SpanId);
 
         // SetParentId fills in the parent (and the trace) before Start, but a span that has not started is nobody's child.
+        await Assert.That(w3cParent.IdFormat).IsEqualTo(ActivityIdFormat.W3C);
+        await Assert.That(w3cParent.Parent).IsNull();
         await Assert.That(hierarchicalChild.ParentId).IsEqualTo(hierarchicalParent.Id);
         await Assert.That(w3cChild.ParentSpanId == w3cParent.SpanId && w3cChild.TraceId == w3cParent.TraceId).IsTrue();
         await Assert.That(async () => await Assert.That(hierarchicalChild).IsChildOf(hierarchicalParent)).Throws<AssertionException>();
