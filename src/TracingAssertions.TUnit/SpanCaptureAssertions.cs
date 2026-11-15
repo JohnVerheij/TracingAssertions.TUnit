@@ -114,14 +114,7 @@ public static class SpanCaptureAssertions
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentOutOfRangeException.ThrowIfNegative(expected);
 
-        // One snapshot for the decision and the message, so a span captured meanwhile cannot make them disagree.
-        var spans = capture.Captured;
-        if (spans.Count == expected)
-        {
-            return AssertionResult.Passed;
-        }
-
-        return AssertionResult.Failed(string.Concat(
-            "it contained ", spans.Count.ToString(CultureInfo.InvariantCulture), "; ", SpanTreeRenderer.Describe(spans)));
+        // The count decides without copying a large capture; a mismatch decides again on the snapshot it describes.
+        return SpanDescriptions.CountResult(expected, capture.CapturedCount, () => capture.Captured);
     }
 }

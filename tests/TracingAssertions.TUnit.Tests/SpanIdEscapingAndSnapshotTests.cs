@@ -105,4 +105,24 @@ internal sealed class SpanIdEscapingAndSnapshotTests
             "none did (the value looked for was 'wanted'); captured spans:\n  op [Internal, Unset] {k=decoy}");
         await Assert.That(capture.Captured.Count).IsEqualTo(2);
     }
+
+    /// <summary>
+    /// <c>HasSpanCount</c> decides on the count without copying the capture, and a count that does not match decides
+    /// again on the snapshot it then takes: a span captured between the two reads makes the assertion pass, and a
+    /// failure names the count of the snapshot whose spans it lists. The snapshot stands in for that race here.
+    /// </summary>
+    [Test]
+    public async Task HasSpanCount_DecidesAgainOnTheSnapshotItDescribes(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var span = new Activity("late");
+        System.Collections.Generic.IReadOnlyList<Activity> snapshot = [span];
+
+        var reached = SpanDescriptions.CountResult(1, 0, () => snapshot);
+        var stillShort = SpanDescriptions.CountResult(2, 0, () => snapshot);
+
+        await Assert.That(reached.IsPassed).IsTrue();
+        await Assert.That(stillShort.IsPassed).IsFalse();
+        await Assert.That(stillShort.Message).IsEqualTo("it contained 1; captured spans:\n  late [Internal, Unset]");
+    }
 }

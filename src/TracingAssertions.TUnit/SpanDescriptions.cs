@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
+using TUnit.Assertions.Core;
 
 namespace TracingAssertions.TUnit;
 
@@ -12,6 +15,30 @@ namespace TracingAssertions.TUnit;
 /// </summary>
 internal static class SpanDescriptions
 {
+    /// <summary>
+    /// The result of a span count assertion. The count decides first, without copying the capture; only a count that
+    /// does not match takes a snapshot, which then decides again and is the one the failure describes. A span
+    /// captured between the two reads can make the assertion pass, but it never makes the count in the failure and
+    /// the spans it lists disagree.
+    /// </summary>
+    /// <param name="expected">The expected number of spans.</param>
+    /// <param name="count">The number of spans the capture holds, read without copying it.</param>
+    /// <param name="snapshot">Takes a snapshot of the captured spans.</param>
+    /// <returns>A passing result, or a failing one that names the count of the snapshot and lists its spans.</returns>
+    internal static AssertionResult CountResult(int expected, int count, Func<IReadOnlyList<Activity>> snapshot)
+    {
+        if (count == expected)
+        {
+            return AssertionResult.Passed;
+        }
+
+        var spans = snapshot();
+        return spans.Count == expected
+            ? AssertionResult.Passed
+            : AssertionResult.Failed(string.Concat(
+                "it contained ", spans.Count.ToString(CultureInfo.InvariantCulture), "; ", SpanTreeRenderer.Describe(spans)));
+    }
+
     /// <summary>Quotes a name or value in single quotes, the form every span failure text uses for names and
     /// values, with line breaks written out so the text keeps its shape.</summary>
     /// <param name="text">The text to quote.</param>
