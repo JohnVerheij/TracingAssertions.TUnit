@@ -261,10 +261,11 @@ The name is `HasSpanWithTag` and not another `HasSpan` overload on purpose: a st
 `HasSpan` would bind to the caller-expression parameter that TUnit adds.
 
 A reason added with `.Because(...)` directly after `HasSpanWithTag` or `HasChildSpan` still reaches the failure
-message, but awaiting that chain gives the capture instead of the span: TUnit's `Because` returns its base assertion
-type, which drops the value of the assertions TUnit generates ([TUnit #7787](https://github.com/thomhurst/TUnit/issues/7787)). Until TracingAssertions is built on a
-TUnit version with the fix, put the reason on the next assertion about the span, or assert once with the reason and
-look the span up again:
+message, but awaiting that chain gives the assertion's subject instead of the span: the capture for `HasSpanWithTag`,
+the parent span for `HasChildSpan`. TUnit's `Because` returns its base assertion type, which drops the value of the
+assertions TUnit generates ([TUnit #7787](https://github.com/thomhurst/TUnit/issues/7787)). Until TracingAssertions
+is built on a TUnit version with the fix, put the reason on the next assertion about the span, or assert first with
+the reason and then look the span up again:
 
 ```csharp
 using System.Diagnostics;
@@ -273,10 +274,10 @@ using var capture = SpanCapture.ForSource("Shop.Orders");
 
 OrderService.Place(orderId: 42);
 
+await Assert.That(capture).HasSpanWithTag("order.place", "order.id", 42).Because("placing an order is traced");
+
 var place = await Assert.That(capture).HasSpanWithTag("order.place", "order.id", 42);
 await Assert.That(place).HasStatus(ActivityStatusCode.Ok).Because("a placed order ends without error");
-
-await Assert.That(capture).HasSpanWithTag("order.place", "order.id", 42).Because("placing an order is traced");
 ```
 
 ## Child spans
