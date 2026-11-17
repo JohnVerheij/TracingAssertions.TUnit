@@ -149,7 +149,7 @@ but real surface. The fuller span-query surface and the broader fluent assertion
   `[GenerateAssertion]` source generator, usable as `await Assert.That(span).HasOperationName("...")`.
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
-[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1

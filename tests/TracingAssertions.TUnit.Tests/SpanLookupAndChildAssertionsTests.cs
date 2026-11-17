@@ -65,7 +65,7 @@ internal sealed class SpanLookupAndChildAssertionsTests
                 await Assert.That(capture).HasSpanWithTag("cycle", "cycle.guid", "xyz").Because("a cycle is traced"))
             .Throws<global::TUnit.Assertions.Exceptions.AssertionException>();
 
-        await Assert.That(exception!.Message).Contains("a cycle is traced");
+        await Assert.That(exception!.Message).Contains(", because a cycle is traced");
     }
 
     [Test]
