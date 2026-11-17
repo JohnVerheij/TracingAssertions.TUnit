@@ -13,6 +13,7 @@ namespace TUnit.Assertions.Extensions
     public sealed class Activity_HasChildSpan_SpanCapture_String_Assertion : TUnit.Assertions.Core.Assertion<System.Diagnostics.Activity>
     {
         public Activity_HasChildSpan_SpanCapture_String_Assertion(TUnit.Assertions.Core.AssertionContext<System.Diagnostics.Activity> context, TracingAssertions.SpanCapture capture, string operationName) { }
+        public new TUnit.Assertions.Extensions.Activity_HasChildSpan_SpanCapture_String_Assertion Because(string message) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<System.Diagnostics.Activity> metadata) { }
         public new System.Runtime.CompilerServices.TaskAwaiter<System.Diagnostics.Activity> GetAwaiter() { }
         protected override string GetExpectation() { }
@@ -156,6 +157,7 @@ namespace TUnit.Assertions.Extensions
     public sealed class SpanCapture_HasSpanWithTag_String_String_Object_Assertion : TUnit.Assertions.Core.Assertion<TracingAssertions.SpanCapture>
     {
         public SpanCapture_HasSpanWithTag_String_String_Object_Assertion(TUnit.Assertions.Core.AssertionContext<TracingAssertions.SpanCapture> context, string operationName, string tagKey, object tagValue) { }
+        public new TUnit.Assertions.Extensions.SpanCapture_HasSpanWithTag_String_String_Object_Assertion Because(string message) { }
         protected override System.Threading.Tasks.Task<TUnit.Assertions.Core.AssertionResult> CheckAsync(TUnit.Assertions.Core.EvaluationMetadata<TracingAssertions.SpanCapture> metadata) { }
         public new System.Runtime.CompilerServices.TaskAwaiter<System.Diagnostics.Activity> GetAwaiter() { }
         protected override string GetExpectation() { }
