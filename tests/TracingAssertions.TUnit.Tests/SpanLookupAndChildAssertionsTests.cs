@@ -34,6 +34,41 @@ internal sealed class SpanLookupAndChildAssertionsTests
     }
 
     [Test]
+    public async Task HasSpanWithTag_WithAReason_StillYieldsTheSpan(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.Lookup.Because");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.Lookup.Because");
+        using (var span = source.StartActivity("cycle"))
+        {
+            span!.SetTag("cycle.guid", "abc");
+        }
+
+        // Awaiting the chain after Because gives the span, not the capture (TUnit 1.86.0 and later).
+        Activity found = await Assert.That(capture).HasSpanWithTag("cycle", "cycle.guid", "abc").Because("a cycle is traced");
+
+        await Assert.That(found.GetTagItem("cycle.guid")).IsEqualTo("abc");
+    }
+
+    [Test]
+    public async Task HasSpanWithTag_WithAReason_NoMatch_TheFailureCarriesTheReason(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.Lookup.BecauseFail");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.Lookup.BecauseFail");
+        using (var span = source.StartActivity("cycle"))
+        {
+            span!.SetTag("cycle.guid", "abc");
+        }
+
+        var exception = await Assert.That(async () =>
+                await Assert.That(capture).HasSpanWithTag("cycle", "cycle.guid", "xyz").Because("a cycle is traced"))
+            .Throws<global::TUnit.Assertions.Exceptions.AssertionException>();
+
+        await Assert.That(exception!.Message).Contains("a cycle is traced");
+    }
+
+    [Test]
     public async Task HasSpanWithTag_ReturnsTheFirstMatchingSpanInCompletionOrder(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -128,6 +163,29 @@ internal sealed class SpanLookupAndChildAssertionsTests
         }
 
         var found = await Assert.That(root).HasChildSpan(capture, "child");
+
+        await Assert.That(found.OperationName).IsEqualTo("child");
+        await Assert.That(found.GetTagItem("n")).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task HasChildSpan_WithAReason_StillYieldsTheChild(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using var source = new ActivitySource("TracingAssertions.TUnit.Tests.Child.Because");
+        using var capture = SpanCapture.ForSource("TracingAssertions.TUnit.Tests.Child.Because");
+        Activity root;
+        using (var rootSpan = source.StartActivity("root"))
+        {
+            root = rootSpan!;
+            using (var child = source.StartActivity("child"))
+            {
+                child!.SetTag("n", 1);
+            }
+        }
+
+        // Awaiting the chain after Because gives the child, not the parent (TUnit 1.86.0 and later).
+        Activity found = await Assert.That(root).HasChildSpan(capture, "child").Because("the root starts a child");
 
         await Assert.That(found.OperationName).IsEqualTo("child");
         await Assert.That(found.GetTagItem("n")).IsEqualTo(1);

@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-17: a reason after HasSpanWithTag and HasChildSpan keeps the span
+
+### Changed
+
+- **`TUnit.Assertions`** and **`TUnit.Core`** minimum versions raised from 1.85.0 to 1.86.0, the first TUnit whose `Because` returns the assertion it is called on for the assertions TUnit generates ([TUnit #7787](https://github.com/thomhurst/TUnit/issues/7787)). TUnit 1.86.0 also makes a collection check that chains to the next one without `.And` or `.Or` a compile error ([TUnit #7791](https://github.com/thomhurst/TUnit/pull/7791)); such a chain checked only its last check before.
+
+### Fixed
+
+- **`HasSpanWithTag(...).Because(reason)` and `HasChildSpan(...).Because(reason)`** give the span when awaited. Before, awaiting the chain gave the assertion's subject (the capture, or the parent span), so `Activity span = await Assert.That(capture).HasSpanWithTag(...).Because("...")` did not compile, and a caller dropped the reason or looked the span up twice.
+
 ## [0.3.0] - 2026-11-15: span tag, child span and duration assertions, span tree renderer, .NET 11
 
 ### Added
@@ -140,6 +150,7 @@ but real surface. The fuller span-query surface and the broader fluent assertion
 - Both packages are AOT-compatible and trimmable, with no runtime reflection in the assertion path.
 
 [unreleased]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...HEAD
+[0.4.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/JohnVerheij/TracingAssertions.TUnit/compare/v0.1.2...v0.2.0
